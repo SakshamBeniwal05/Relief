@@ -1,5 +1,27 @@
 # React + TypeScript + Vite
 
+## Run With the Backend
+
+Start the API in one terminal from the workspace root:
+
+```powershell
+cd Backend
+npm install
+npm run dev
+```
+
+Start the separate district predictor in another terminal from `Backend` with `npm run dev:ai` to enable the Risk Prediction Lab. The predictor is optional; the main API and dashboard stay available when it is stopped.
+
+Start the UI in a second terminal:
+
+```powershell
+cd Frontend
+npm ci
+npm run dev
+```
+
+Vite proxies `/api` and `/socket.io` to `http://localhost:3000`. Set `VITE_API_PROXY_TARGET` in `Frontend/.env.local` if the backend uses another port. Public forms, live hazard and relocation data, admin triage, directives, and SOS packet sync use this API. The admin key setting is for local demos only; browser `VITE_` values are public and must not contain a production secret.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

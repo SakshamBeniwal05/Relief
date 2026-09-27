@@ -3,8 +3,8 @@ import type { VolunteerApplicant } from '../../types';
 
 interface AdminVolunteerConsoleProps {
   initialApplicants: VolunteerApplicant[];
-  onApprove?: (id: string) => void;
-  onReject?: (id: string) => void;
+  onApprove?: (id: string) => Promise<void> | void;
+  onReject?: (id: string) => Promise<void> | void;
 }
 
 export const AdminVolunteerConsole: React.FC<AdminVolunteerConsoleProps> = ({
@@ -12,7 +12,6 @@ export const AdminVolunteerConsole: React.FC<AdminVolunteerConsoleProps> = ({
   onApprove,
   onReject,
 }) => {
-  const [applicants, setApplicants] = useState<VolunteerApplicant[]>(initialApplicants);
   const [filterType, setFilterType] = useState<string>('all');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
@@ -21,20 +20,22 @@ export const AdminVolunteerConsole: React.FC<AdminVolunteerConsoleProps> = ({
     setTimeout(() => setAlertMessage(null), 3000);
   };
 
-  const handleApprove = (id: string, name: string) => {
-    setApplicants((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status: 'approved' } : app))
-    );
-    if (onApprove) onApprove(id);
-    showAlert(`Approved & Deployed: ${name} to sector.`);
+  const handleApprove = async (id: string, name: string) => {
+    try {
+      await onApprove?.(id);
+      showAlert(`Approved & Deployed: ${name} to sector.`);
+    } catch (error) {
+      showAlert(error instanceof Error ? error.message : 'Could not update this application.');
+    }
   };
 
-  const handleReject = (id: string, name: string) => {
-    setApplicants((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status: 'rejected' } : app))
-    );
-    if (onReject) onReject(id);
-    showAlert(`Application declined for ${name}.`);
+  const handleReject = async (id: string, name: string) => {
+    try {
+      await onReject?.(id);
+      showAlert(`Application declined for ${name}.`);
+    } catch (error) {
+      showAlert(error instanceof Error ? error.message : 'Could not update this application.');
+    }
   };
 
   const handleCall = (phone: string, name: string) => {
@@ -45,7 +46,7 @@ export const AdminVolunteerConsole: React.FC<AdminVolunteerConsoleProps> = ({
     showAlert(`Automated briefing SMS dispatched to ${name}.`);
   };
 
-  const filteredApplicants = applicants.filter((app) => {
+  const filteredApplicants = initialApplicants.filter((app) => {
     if (filterType === 'all') return true;
     if (filterType === 'medical') return app.specializationType === 'medical';
     if (filterType === 'vehicle') return app.specializationType === 'vehicle';

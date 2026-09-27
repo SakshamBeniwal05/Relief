@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { GazetteOrderPayload } from '../../types';
 
 interface AdminSosDirectivesProps {
-  onBroadcastDirective?: (payload: GazetteOrderPayload) => void;
+  onBroadcastDirective?: (payload: GazetteOrderPayload) => Promise<void> | void;
 }
 
 export const AdminSosDirectives: React.FC<AdminSosDirectivesProps> = ({
@@ -15,22 +15,28 @@ export const AdminSosDirectives: React.FC<AdminSosDirectivesProps> = ({
   );
   const [pushBleMeshSiren, setPushBleMeshSiren] = useState(true);
   const [isSigned, setIsSigned] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
     const payload: GazetteOrderPayload = {
       orderType,
       targetSector,
       directiveText,
       pushBleMeshSiren,
     };
-    if (onBroadcastDirective) {
-      onBroadcastDirective(payload);
+    try {
+      await onBroadcastDirective?.(payload);
+      setIsSigned(true);
+      setTimeout(() => setIsSigned(false), 3000);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Directive could not be published.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSigned(true);
-    setTimeout(() => {
-      setIsSigned(false);
-    }, 3000);
   };
 
   return (
@@ -54,7 +60,7 @@ export const AdminSosDirectives: React.FC<AdminSosDirectivesProps> = ({
           <span className="material-symbols-outlined text-2xl text-[#2e7d32]">verified</span>
           <div>
             <div className="font-heading font-bold text-xs text-[#1b5e20]">
-              Gazette Executive Directive Cryptographically Signed & Broadcasted
+              Gazette Directive Published to the Command Feed
             </div>
             <div className="text-[11px] text-on-surface-variant mt-0.5">
               Mesh siren and SMS broadcast sent to {targetSector}. Order ID #UK-SDRF-2024-EX-09.
@@ -63,6 +69,7 @@ export const AdminSosDirectives: React.FC<AdminSosDirectivesProps> = ({
         </div>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {error && <p role="alert" className="text-xs text-error">{error}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-bold text-on-surface-variant mb-1">
@@ -137,7 +144,7 @@ export const AdminSosDirectives: React.FC<AdminSosDirectivesProps> = ({
                 className="px-5 py-2 rounded-full bg-primary text-on-primary text-xs font-heading font-bold hover:bg-primary-container transition-all active:scale-95 shadow-sm"
                 type="submit"
               >
-                Sign &amp; Broadcast Directive
+                {isSubmitting ? 'Publishing...' : 'Sign & Broadcast Directive'}
               </button>
             </div>
           </div>

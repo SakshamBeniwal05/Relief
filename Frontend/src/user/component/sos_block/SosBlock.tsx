@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
 
 interface SosBlockProps {
-  onSosBroadcast?: () => void;
+  onSosBroadcast?: () => Promise<void> | void;
 }
 
 export const SosBlock: React.FC<SosBlockProps> = ({ onSosBroadcast }) => {
   const [isSosDrawerOpen, setIsSosDrawerOpen] = useState(false);
   const [broadcastSent, setBroadcastSent] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleBroadcast = () => {
-    setBroadcastSent(true);
-    if (onSosBroadcast) {
-      onSosBroadcast();
-    } else {
-      alert('Offline BLE Distress Beacon broadcasted to 4 nearby mesh peers.');
+  const handleBroadcast = async () => {
+    setIsSending(true);
+    setError(null);
+    try {
+      await onSosBroadcast?.();
+      setBroadcastSent(true);
+      setTimeout(() => {
+        setBroadcastSent(false);
+        setIsSosDrawerOpen(false);
+      }, 2500);
+    } catch (sendError) {
+      setError(sendError instanceof Error ? sendError.message : 'SOS packet could not be sent.');
+    } finally {
+      setIsSending(false);
     }
-    setTimeout(() => {
-      setBroadcastSent(false);
-      setIsSosDrawerOpen(false);
-    }, 2500);
   };
 
   return (
@@ -65,7 +71,7 @@ export const SosBlock: React.FC<SosBlockProps> = ({ onSosBroadcast }) => {
 
           <div className="p-4 space-y-2.5 overflow-y-auto tactical-scroll">
             <p className="text-[11px] text-on-surface-variant">
-              Immediate connection to civil defense control rooms or peer-to-peer radio broadcast.
+              Call emergency services or sync a geolocated SOS packet to the command feed while connected.
             </p>
 
             <a
@@ -110,9 +116,10 @@ export const SosBlock: React.FC<SosBlockProps> = ({ onSosBroadcast }) => {
                 {broadcastSent ? 'check_circle' : 'podcasts'}
               </span>
               <span>
-                {broadcastSent ? 'Distress Beacon Transmitted!' : 'Broadcast BLE Mesh SOS (Offline)'}
+                {broadcastSent ? 'SOS Packet Sent to Command Feed' : isSending ? 'Sending SOS...' : 'Send SOS Packet'}
               </span>
             </button>
+            {error && <p role="alert" className="text-xs text-error">{error}</p>}
           </div>
         </div>
       )}
