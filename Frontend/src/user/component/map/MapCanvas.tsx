@@ -6,13 +6,14 @@ import {
   PolylineF,
   OVERLAY_MOUSE_TARGET,
 } from '@react-google-maps/api';
-import type { ModeType } from '../../types';
+import type { HazardEntity, ModeType } from '../../types';
 import type { GoogleMapType, MapLayerSettings } from './MapSettingsModal';
 
 interface MapCanvasProps {
   currentMode: ModeType;
   mapTypeId?: GoogleMapType;
   layers?: MapLayerSettings;
+  entities?: { key: string; entity: HazardEntity }[];
   onSelectEntity: (key: string) => void;
   onCanvasClick?: () => void;
   onMapLoad?: (map: google.maps.Map) => void;
@@ -54,6 +55,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   currentMode,
   mapTypeId = 'terrain',
   layers = { river: true, highway: true, evacRoute: true, pins: true },
+  entities = [],
   onSelectEntity,
   onCanvasClick,
   onMapLoad,
@@ -199,6 +201,30 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           {/* HAZARD & SHELTER PINS */}
           {layers.pins && (
             <>
+              {entities.map(({ key, entity }) => entity.coordinates && (
+                <OverlayViewF
+                  key={key}
+                  position={entity.coordinates}
+                  mapPaneName={OVERLAY_MOUSE_TARGET}
+                  getPixelPositionOffset={getOffset(-36, -36)}
+                >
+                  <button
+                    aria-label={`Open ${entity.title}`}
+                    className={`group flex flex-col items-center text-left ${entity.category.startsWith('SAFE TERMINAL') ? 'text-[#2e7d32]' : 'text-error'}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelectEntity(key);
+                    }}
+                    type="button"
+                  >
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-full text-white shadow-lg ring-4 transition-transform group-hover:scale-110 ${entity.category.startsWith('SAFE TERMINAL') ? 'bg-[#2e7d32] ring-[#2e7d32]/20' : 'bg-error ring-error/20'}`}>
+                      <span className="material-symbols-outlined text-lg">{entity.category.startsWith('SAFE TERMINAL') ? 'night_shelter' : 'warning'}</span>
+                    </span>
+                    <span className="mt-1 max-w-48 truncate rounded-full border border-outline-variant bg-surface-container-lowest/95 px-2 py-1 text-[10px] font-bold text-on-surface shadow-md">{entity.title}</span>
+                  </button>
+                </OverlayViewF>
+              ))}
+              {entities.length === 0 && <>
               {/* MARKER 1: JOSHIMATH SUBSIDENCE HAZARD PIN */}
               <OverlayViewF
                 position={{ lat: 30.556, lng: 79.563 }}
@@ -322,6 +348,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                   </div>
                 </div>
               </OverlayViewF>
+              </>}
             </>
           )}
         </GoogleMap>
@@ -421,6 +448,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           {/* HAZARD & SHELTER PINS IN FALLBACK */}
           {layers.pins && (
             <>
+              {entities.map(({ key, entity }) => entity.coordinates && (
+                <button
+                  key={key}
+                  aria-label={`Open ${entity.title}`}
+                  className="absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
+                  style={{
+                    top: `${Math.max(12, Math.min(86, 20 + (30.74 - entity.coordinates.lat) * 100))}%`,
+                    left: `${Math.max(12, Math.min(86, 80 - (entity.coordinates.lng - 79.15) * 120))}%`,
+                  }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelectEntity(key);
+                  }}
+                  type="button"
+                >
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-full text-white shadow-lg ring-4 transition-transform group-hover:scale-110 ${entity.category.startsWith('SAFE TERMINAL') ? 'bg-[#2e7d32] ring-[#2e7d32]/20' : 'bg-error ring-error/20'}`}>
+                    <span className="material-symbols-outlined text-lg">{entity.category.startsWith('SAFE TERMINAL') ? 'night_shelter' : 'warning'}</span>
+                  </span>
+                  <span className="mt-1 block max-w-48 truncate rounded-full border border-outline-variant bg-surface-container-lowest/95 px-2 py-1 text-[10px] font-bold text-on-surface shadow-md">{entity.title}</span>
+                </button>
+              ))}
+              {entities.length === 0 && <>
               {/* HAZARD PIN 1: JOSHIMATH SUBSIDENCE */}
               <div
                 className="absolute top-[46%] left-[46%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
@@ -493,6 +542,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                   </div>
                 </div>
               </div>
+              </>}
             </>
           )}
         </div>

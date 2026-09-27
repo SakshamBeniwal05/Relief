@@ -3,16 +3,17 @@ import type { GeoIncident } from '../../types';
 
 interface AdminGeocamQueueProps {
   initialIncidents: GeoIncident[];
-  onVerifyAndPushMap?: (id: string) => void;
-  onEscalateSdrf?: (id: string) => void;
+  onVerifyAndPushMap?: (id: string) => Promise<void> | void;
+  onEscalateSdrf?: (id: string) => Promise<void> | void;
+  onDismiss?: (id: string) => Promise<void> | void;
 }
 
 export const AdminGeocamQueue: React.FC<AdminGeocamQueueProps> = ({
   initialIncidents,
   onVerifyAndPushMap,
   onEscalateSdrf,
+  onDismiss,
 }) => {
-  const [incidents, setIncidents] = useState<GeoIncident[]>(initialIncidents);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const showFeedback = (msg: string) => {
@@ -20,25 +21,31 @@ export const AdminGeocamQueue: React.FC<AdminGeocamQueueProps> = ({
     setTimeout(() => setFeedback(null), 3000);
   };
 
-  const handleVerify = (id: string, title: string) => {
-    setIncidents((prev) =>
-      prev.map((inc) => (inc.id === id ? { ...inc, status: 'verified' } : inc))
-    );
-    if (onVerifyAndPushMap) onVerifyAndPushMap(id);
-    showFeedback(`Incident "${title}" verified & pushed to public GIS map!`);
+  const handleVerify = async (id: string, title: string) => {
+    try {
+      await onVerifyAndPushMap?.(id);
+      showFeedback(`Incident "${title}" verified & pushed to public GIS map!`);
+    } catch (error) {
+      showFeedback(error instanceof Error ? error.message : 'Could not verify this report.');
+    }
   };
 
-  const handleEscalate = (id: string, title: string) => {
-    setIncidents((prev) =>
-      prev.map((inc) => (inc.id === id ? { ...inc, status: 'escalated' } : inc))
-    );
-    if (onEscalateSdrf) onEscalateSdrf(id);
-    showFeedback(`Escalated to SDRF Quick Reaction Team for "${title}"!`);
+  const handleEscalate = async (id: string, title: string) => {
+    try {
+      await onEscalateSdrf?.(id);
+      showFeedback(`Escalated to SDRF Quick Reaction Team for "${title}"!`);
+    } catch (error) {
+      showFeedback(error instanceof Error ? error.message : 'Could not escalate this report.');
+    }
   };
 
-  const handleDismiss = (id: string, title: string) => {
-    setIncidents((prev) => prev.filter((inc) => inc.id !== id));
-    showFeedback(`Dismissed report "${title}" as invalid.`);
+  const handleDismiss = async (id: string, title: string) => {
+    try {
+      await onDismiss?.(id);
+      showFeedback(`Dismissed report "${title}" as invalid.`);
+    } catch (error) {
+      showFeedback(error instanceof Error ? error.message : 'Could not dismiss this report.');
+    }
   };
 
   return (
@@ -56,7 +63,7 @@ export const AdminGeocamQueue: React.FC<AdminGeocamQueueProps> = ({
           </p>
         </div>
         <span className="text-[11px] font-bold px-3 py-1 bg-surface-container-high text-on-surface rounded-full self-start">
-          {incidents.length} Pending Verification
+          {initialIncidents.filter((incident) => incident.status === 'pending').length} Pending Verification
         </span>
       </div>
 
@@ -70,7 +77,7 @@ export const AdminGeocamQueue: React.FC<AdminGeocamQueueProps> = ({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {incidents.map((incident) => (
+        {initialIncidents.map((incident) => (
           <div
             key={incident.id}
             className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/60 shadow-sm flex flex-col md:flex-row gap-5"

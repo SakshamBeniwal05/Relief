@@ -4,7 +4,7 @@ import type { VolunteerApplicationData } from '../../types';
 interface VolunteerApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmitApplication?: (data: VolunteerApplicationData) => void;
+  onSubmitApplication?: (data: VolunteerApplicationData) => Promise<void> | void;
 }
 
 export const VolunteerApplicationModal: React.FC<VolunteerApplicationModalProps> = ({
@@ -19,19 +19,27 @@ export const VolunteerApplicationModal: React.FC<VolunteerApplicationModalProps>
     notes: '',
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmitApplication) {
-      onSubmitApplication(formData);
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await onSubmitApplication?.(formData);
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        onClose();
+      }, 2000);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Application could not be sent.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      onClose();
-    }, 2000);
   };
 
   return (
@@ -61,11 +69,12 @@ export const VolunteerApplicationModal: React.FC<VolunteerApplicationModalProps>
             </div>
             <h4 className="font-heading font-bold text-sm text-on-surface">Application Registered!</h4>
             <p className="text-xs text-on-surface-variant">
-              NDRF Sector 4 Command has received your credentials. You will receive an instant verification SMS.
+              Your application was added to the administration review queue. The team will contact you after verification.
             </p>
           </div>
         ) : (
           <form className="p-4 space-y-3" onSubmit={handleSubmit}>
+            {error && <p role="alert" className="text-xs text-error">{error}</p>}
             <div>
               <label className="text-[11px] font-bold text-on-surface">Full Name</label>
               <input
@@ -113,7 +122,7 @@ export const VolunteerApplicationModal: React.FC<VolunteerApplicationModalProps>
                 className="px-5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-xs hover:bg-primary-container transition-colors"
                 type="submit"
               >
-                Submit Application
+                {isSubmitting ? 'Submitting...' : 'Submit Application'}
               </button>
             </div>
           </form>

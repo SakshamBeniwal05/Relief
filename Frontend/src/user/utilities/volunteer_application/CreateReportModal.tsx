@@ -4,7 +4,7 @@ import type { GeoEvidenceSubmission } from '../../types';
 interface CreateReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmitReport?: (report: GeoEvidenceSubmission) => void;
+  onSubmitReport?: (report: GeoEvidenceSubmission) => Promise<void> | void;
   defaultSector?: string;
 }
 
@@ -18,23 +18,31 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
   const [observationNotes, setObservationNotes] = useState('');
   const [photoSnapped, setPhotoSnapped] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmitReport) {
-      onSubmitReport({
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await onSubmitReport?.({
         targetSector,
         observationNotes,
         location: '30.5562° N, 79.5638° E',
       });
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        onClose();
+      }, 2000);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Report could not be sent.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      onClose();
-    }, 2000);
   };
 
   return (
@@ -62,13 +70,14 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
             <div className="w-12 h-12 rounded-full bg-[#2e7d32]/20 text-[#2e7d32] flex items-center justify-center mx-auto">
               <span className="material-symbols-outlined text-2xl">verified</span>
             </div>
-            <h4 className="font-heading font-bold text-sm text-on-surface">Evidence Authenticated!</h4>
+            <h4 className="font-heading font-bold text-sm text-on-surface">Report Received</h4>
             <p className="text-xs text-on-surface-variant">
-              Hardware GPS EXIF cryptographically signed and sent to Admin Triage Queue.
+              Your report was sent to the admin triage queue and is awaiting verification.
             </p>
           </div>
         ) : (
           <form className="p-4 space-y-3" onSubmit={handleSubmit}>
+            {error && <p role="alert" className="text-xs text-error">{error}</p>}
             <div>
               <label className="text-[11px] font-bold text-on-surface">Target Sector</label>
               <input
@@ -118,7 +127,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
                 className="px-5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-xs hover:bg-primary-container transition-colors"
                 type="submit"
               >
-                Submit Evidence
+                {isSubmitting ? 'Submitting...' : 'Submit Report'}
               </button>
             </div>
           </form>

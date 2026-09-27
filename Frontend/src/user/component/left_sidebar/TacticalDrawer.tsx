@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import type { ModeType, Mode1Filter, Mode2SubTab } from '../../types';
+import type { HazardEntity, ModeType, Mode1Filter, Mode2SubTab } from '../../types';
+
+interface EntityEntry {
+  key: string;
+  entity: HazardEntity;
+}
 
 interface TacticalDrawerProps {
   isOpen: boolean;
@@ -8,6 +13,10 @@ interface TacticalDrawerProps {
   onSelectEntity: (key: string) => void;
   onOpenVolunteerModal: () => void;
   onOpenMapSettings?: () => void;
+  hazards?: EntityEntry[];
+  shelters?: EntityEntry[];
+  habitations?: EntityEntry[];
+  timelines?: EntityEntry[];
 }
 
 export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
@@ -17,6 +26,10 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
   onSelectEntity,
   onOpenVolunteerModal,
   onOpenMapSettings,
+  hazards = [],
+  shelters = [],
+  habitations = [],
+  timelines = [],
 }) => {
   const [mode1Filter, setMode1Filter] = useState<Mode1Filter>('official');
   const [mode2SubTab, setMode2SubTab] = useState<Mode2SubTab>('queues');
@@ -97,7 +110,27 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
             </button>
           </div>
 
+          {hazards.length > 0 && hazards.map(({ key, entity }) => (
+            <div
+              key={key}
+              className="group cursor-pointer rounded-2xl border-l-4 border-error bg-surface-container-low p-3 shadow-xs transition-all hover:bg-surface-container"
+              onClick={() => onSelectEntity(key)}
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="truncate text-[11px] font-bold text-error">{entity.category}</span>
+                <span className="shrink-0 text-[10px] text-on-surface-variant">Live</span>
+              </div>
+              <h3 className="font-heading text-xs font-bold text-on-surface transition-colors group-hover:text-primary">{entity.title}</h3>
+              <p className="mt-1 line-clamp-2 text-[11px] text-on-surface-variant">{entity.desc}</p>
+              <div className="mt-2 flex justify-between border-t border-outline-variant/60 pt-1.5 text-[10px] font-bold text-primary">
+                <span>{entity.telemetry.fos} | {entity.telemetry.rain}</span>
+                <span>Details</span>
+              </div>
+            </div>
+          ))}
+
           {/* Alert Item 1: Joshimath */}
+          {hazards.length === 0 && <>
           {(mode1Filter === 'official' || mode1Filter === 'ai') && (
             <div
               className="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-error shadow-xs transition-all"
@@ -175,6 +208,7 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
               </span>
             </div>
           </div>
+          </>}
         </div>
       )}
 
@@ -220,6 +254,21 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
 
           {/* Habitations Subpanel */}
           {mode2SubTab === 'queues' && (
+            habitations.length > 0 ? (
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-on-surface">Relocation Priority Queue</div>
+                {habitations.map(({ key, entity }, index) => (
+                  <button key={key} className="w-full rounded-2xl border-l-4 border-tertiary-container bg-surface-container-low p-3 text-left shadow-xs transition-all hover:bg-surface-container" onClick={() => onSelectEntity(key)} type="button">
+                    <div className="mb-1 flex justify-between gap-2 text-[11px]">
+                      <span className="font-bold text-tertiary">Rank #{index + 1} • {entity.category.replace('RELOCATION • ', '')}</span>
+                      <span className="text-on-surface-variant">{entity.meta}</span>
+                    </div>
+                    <span className="font-heading text-xs font-bold text-on-surface">{entity.title}</span>
+                    <span className="mt-1 block text-[11px] text-on-surface-variant">{entity.desc}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-[11px] font-bold">
                 <span className="text-on-surface uppercase tracking-wider">Relocation Priority Queue</span>
@@ -268,10 +317,25 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
                 </div>
               </div>
             </div>
+            )
           )}
 
           {/* Safe Shelters Subpanel */}
           {mode2SubTab === 'shelters' && (
+            shelters.length > 0 ? (
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-on-surface">Active Safe Shelters</div>
+                {shelters.map(({ key, entity }) => (
+                  <button key={key} className="w-full rounded-2xl border border-outline-variant/80 bg-surface-container-low p-3 text-left shadow-xs transition-all hover:bg-surface-container" onClick={() => onSelectEntity(key)} type="button">
+                    <div className="flex justify-between gap-2 text-[11px] font-bold text-[#2e7d32]">
+                      <span className="truncate">{entity.title}</span>
+                      <span className="shrink-0">{entity.telemetry.fos}</span>
+                    </div>
+                    <span className="mt-1 block text-[11px] text-on-surface-variant">{entity.desc}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-[11px] font-bold">
                 <span className="text-on-surface uppercase tracking-wider">Active Safe Shelters</span>
@@ -299,10 +363,26 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
                 </div>
               </div>
             </div>
+            )
           )}
 
           {/* Gazette Timelines Subpanel */}
           {mode2SubTab === 'timelines' && (
+            timelines.length > 0 ? (
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-on-surface">Government Gazette Orders</div>
+                {timelines.map(({ key, entity }) => (
+                  <button key={key} className="w-full rounded-2xl border border-outline-variant/80 bg-surface-container-low p-3 text-left shadow-xs transition-all hover:bg-surface-container" onClick={() => onSelectEntity(key)} type="button">
+                    <div className="flex justify-between gap-2 text-[11px] font-bold text-primary">
+                      <span>{entity.meta}</span>
+                      <span className="shrink-0">{entity.telemetry.tilt}</span>
+                    </div>
+                    <span className="mt-1 block font-heading text-xs font-bold text-on-surface">{entity.title}</span>
+                    <span className="mt-1 block text-[11px] text-on-surface-variant">{entity.desc}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-[11px] font-bold">
                 <span className="text-on-surface uppercase tracking-wider">Government Gazette Orders</span>
@@ -330,6 +410,7 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
                 </div>
               </div>
             </div>
+            )
           )}
         </div>
       )}
