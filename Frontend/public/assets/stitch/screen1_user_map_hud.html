@@ -1,0 +1,925 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RELIFE - Uttarakhand Disaster Command Platform</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          error: "#ba1a1a",
+          "error-container": "#ffdad6",
+          "on-error": "#ffffff",
+          "on-error-container": "#93000a",
+          primary: "#432b81",
+          "primary-container": "#5b449a",
+          "on-primary": "#ffffff",
+          "primary-fixed": "#e8ddff",
+          "on-primary-fixed": "#21005d",
+          secondary: "#625b71",
+          "secondary-container": "#e8def9",
+          "on-secondary-container": "#686177",
+          tertiary: "#57313e",
+          "tertiary-container": "#714755",
+          surface: "#fef7ff",
+          "surface-dim": "#dfd7e3",
+          "surface-container-lowest": "#ffffff",
+          "surface-container-low": "#f9f1fd",
+          "surface-container": "#f3ebf7",
+          "surface-container-high": "#ede6f1",
+          "surface-container-highest": "#e7e0eb",
+          "on-surface": "#1d1a22",
+          "on-surface-variant": "#494551",
+          outline: "#7a7582",
+          "outline-variant": "#cac4d2"
+        },
+        fontFamily: {
+          sans: ["Public Sans", "sans-serif"],
+          heading: ["Manrope", "sans-serif"],
+          mono: ["JetBrains Mono", "monospace"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .gis-grid {
+    background-color: #f7f2f9;
+    background-image: radial-gradient(rgba(91, 68, 154, 0.16) 1.5px, transparent 1.5px);
+    background-size: 26px 26px;
+  }
+  @keyframes ping-slow {
+    0% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.7); opacity: 0.25; }
+    100% { transform: scale(2.3); opacity: 0; }
+  }
+  .pulsing-threat {
+    animation: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  .tactical-scroll::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .tactical-scroll::-webkit-scrollbar-thumb {
+    background: #cac4d2;
+    border-radius: 9999px;
+  }
+</style>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-hidden select-none w-screen h-screen relative font-sans">
+<!-- ========================================================================= -->
+<!-- 1. FULL-SCREEN BASE LAYER MAP (100vw x 100vh)                              -->
+<!-- ========================================================================= -->
+<main class="fixed inset-0 w-full h-full gis-grid z-0 overflow-hidden flex items-center justify-center pointer-events-auto" onclick="handleMapCanvasClick(event)">
+<!-- Topographic & Hydrographic Overlay Vectors -->
+<div class="absolute inset-0 pointer-events-none">
+<svg class="w-full h-full opacity-65" preserveAspectRatio="none" viewBox="0 0 1200 800">
+<path d="M 0 150 Q 300 120 600 240 T 1200 210" fill="none" stroke="#cac4d2" stroke-dasharray="4 4" stroke-width="1.5"></path>
+<path d="M 0 320 Q 380 280 750 420 T 1200 360" fill="none" stroke="#cac4d2" stroke-width="2"></path>
+<path d="M 0 520 Q 420 460 850 620 T 1200 580" fill="none" stroke="#cac4d2" stroke-dasharray="3 3" stroke-width="1.5"></path>
+<!-- Alaknanda River -->
+<path d="M 120 40 Q 280 200 460 310 T 780 490 T 1150 780" fill="none" opacity="0.8" stroke="#688ed8" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"></path>
+<!-- Severed NH-58 Highway (Red Dashed) -->
+<path d="M 220 80 L 450 300 L 590 410 L 760 510 L 1020 720" fill="none" opacity="0.75" stroke="#ba1a1a" stroke-dasharray="8 6" stroke-width="4"></path>
+<!-- Mode 2 Safe Relocation Route (Green Dashed) -->
+<path class="hidden" d="M 450 300 Q 560 260 670 330 T 890 530" fill="none" id="evac-route-poly" stroke="#2e7d32" stroke-dasharray="10 8" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"></path>
+</svg>
+<span class="absolute top-[12%] left-[34%] text-[11px] font-bold font-heading text-outline uppercase tracking-wider">Kedarnath Ridge (Elev 3,583m)</span>
+<span class="absolute top-[37%] left-[46%] text-[11px] font-bold font-heading text-[#3960b0] uppercase tracking-wider">Alaknanda River Corridor</span>
+<span class="absolute bottom-[23%] right-[22%] text-[11px] font-bold font-heading text-outline uppercase tracking-wider">NH-58 Bypass Corridor</span>
+</div>
+<!-- HAZARD PIN 1: JOSHIMATH SUBSIDENCE -->
+<div class="absolute top-[46%] left-[46%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group" id="pin-joshimath" onclick="event.stopPropagation(); openDetailsSidebar('joshimath')">
+<div class="relative w-36 h-36 flex items-center justify-center">
+<div class="absolute inset-0 rounded-full bg-error/15 border-2 border-dashed border-error/50 pulsing-threat"></div>
+<div class="w-16 h-16 rounded-full bg-error/25 flex items-center justify-center">
+<div class="w-9 h-9 rounded-full bg-error text-on-error flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">landslide</span>
+</div>
+</div>
+<div class="absolute -bottom-6 px-3 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur-sm text-on-surface text-[11px] font-bold shadow-md border border-outline-variant flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-error"></span> Joshimath Sector (FoS: 0.84)
+      </div>
+</div>
+</div>
+<!-- HAZARD PIN 2: ALAKNANDA SURGE -->
+<div class="absolute top-[58%] left-[62%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group" id="pin-alaknanda" onclick="event.stopPropagation(); openDetailsSidebar('alaknanda')">
+<div class="relative w-28 h-28 flex items-center justify-center">
+<div class="absolute inset-0 rounded-full bg-error/15 border border-error/40 animate-pulse"></div>
+<div class="w-8 h-8 rounded-full bg-error text-on-error flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">flood</span>
+</div>
+<div class="absolute -bottom-5 px-2.5 py-0.5 rounded-full bg-surface-container-lowest/95 backdrop-blur-sm text-on-surface text-[11px] font-bold shadow-md border border-outline-variant flex items-center gap-1 whitespace-nowrap">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Pipalkoti Surge
+      </div>
+</div>
+</div>
+<!-- SAFE SHELTER PIN 1: GAUCHAR FIELD HUB -->
+<div class="absolute top-[66%] left-[74%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group" id="pin-shelter-gauchar" onclick="event.stopPropagation(); openDetailsSidebar('shelter_gauchar')">
+<div class="relative flex flex-col items-center">
+<div class="w-11 h-11 rounded-full bg-[#2e7d32] text-white flex items-center justify-center shadow-lg ring-4 ring-[#2e7d32]/20 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">night_shelter</span>
+</div>
+<div class="mt-1 px-3 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur-sm text-[#1b5e20] text-[11px] font-bold shadow-md border border-[#2e7d32]/40 flex items-center gap-1.5 whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-[#2e7d32]"></span> Gauchar Hub (58 Beds Free)
+      </div>
+</div>
+</div>
+</main>
+<!-- ========================================================================= -->
+<!-- 2. FLOATING HUD APP BAR                                                   -->
+<!-- ========================================================================= -->
+<header class="fixed top-4 inset-x-4 z-50 pointer-events-none flex items-center justify-between gap-4">
+<!-- Left Brand and Search -->
+<div class="flex items-center gap-2.5 pointer-events-auto">
+<button class="p-2.5 rounded-full bg-surface-container-lowest/90 backdrop-blur-md hover:bg-surface-container-high transition-colors active:scale-95 text-primary border border-outline-variant shadow-sm" id="toggle-drawer-btn" onclick="toggleDrawer()" title="Toggle Command Drawer">
+<span class="material-symbols-outlined text-xl">menu</span>
+</button>
+<div class="flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface-container-lowest/90 backdrop-blur-md border border-outline-variant shadow-sm">
+<div class="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-base">spa</span>
+</div>
+<span class="font-heading font-bold text-lg text-primary tracking-tight leading-none lowercase">relife</span>
+</div>
+<div class="relative hidden sm:flex items-center w-52 md:w-60 shadow-sm rounded-full bg-surface-container-lowest/90 backdrop-blur-md border border-outline-variant">
+<span class="material-symbols-outlined absolute left-3 text-outline text-lg pointer-events-none">search</span>
+<input class="w-full h-9 pl-9 pr-7 rounded-full bg-transparent text-xs placeholder:text-outline focus:outline-none border-none" placeholder="Search corridors, habitations..." type="text">
+</div>
+</div>
+<!-- CENTER MODE 1 / MODE 2 PILL SWITCHER -->
+<div class="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-20">
+<div class="flex items-center bg-surface-container-lowest/95 backdrop-blur-md rounded-full p-1 border border-outline-variant shadow-md">
+<button class="flex items-center gap-1.5 bg-primary text-on-primary rounded-full px-4 py-2 text-xs font-heading font-bold transition-all active:scale-95 shadow-sm" id="mode-1-btn" onclick="setMode(1)">
+<span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">radar</span>
+<span class="whitespace-nowrap">Mode 1: Threat Radar</span>
+</button>
+<button class="flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface rounded-full px-4 py-2 text-xs font-heading font-bold transition-all active:scale-95" id="mode-2-btn" onclick="setMode(2)">
+<span class="material-symbols-outlined text-base">alt_route</span>
+<span class="whitespace-nowrap">Mode 2: Relocation &amp; Lifelines</span>
+</button>
+</div>
+</div>
+<!-- Right Telemetry Badges & Status -->
+<div class="flex items-center gap-2 pointer-events-auto">
+<div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-lowest/90 backdrop-blur-md border border-outline-variant text-[11px] font-bold shadow-sm">
+<span class="w-2 h-2 rounded-full bg-[#2e7d32] animate-pulse"></span>
+<span class="text-on-surface">BLE Mesh Online</span>
+</div>
+<button class="w-9 h-9 rounded-full bg-surface-container-lowest/90 backdrop-blur-md border border-outline-variant shadow-sm flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors active:scale-95" onclick="document.getElementById('radar-hud-card').classList.toggle('hidden')" title="Satellite Weather Radar HUD">
+<span class="material-symbols-outlined text-lg">satellite_alt</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs shadow-sm active:scale-95 transition-transform" title="Commander Profile">
+<span class="material-symbols-outlined text-lg">person</span>
+</button>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 3. FLOATING TACTICAL COMMAND DRAWER (Mode 1 & Mode 2 Inner Lists)         -->
+<!-- ========================================================================= -->
+<aside class="fixed left-4 top-20 bottom-4 z-30 w-80 md:w-96 max-w-[calc(100vw-2rem)] bg-surface-container-lowest/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden transition-all duration-300 -translate-x-[115%]" id="tactical-drawer">
+<!-- Drawer Header -->
+<div class="p-3.5 border-b border-outline-variant/80 flex items-center justify-between bg-surface-container/60">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-sm" id="drawer-icon">policy</span>
+</div>
+<div>
+<h2 class="font-heading font-bold text-sm text-on-surface" id="drawer-headline">Threat Radar &amp; Alerts</h2>
+<p class="text-[11px] text-on-surface-variant" id="drawer-subtext">Government Directives &amp; AI Forewarning</p>
+</div>
+</div>
+<button class="p-1.5 rounded-full hover:bg-surface-container-highest transition-colors active:scale-95 text-on-surface-variant" onclick="toggleDrawer()">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+<!-- MODE 1 INNER LIST -->
+<div class="flex-1 overflow-y-auto p-3.5 space-y-2.5 tactical-scroll" id="mode-1-content">
+<!-- Filter Pills -->
+<div class="flex items-center gap-1 bg-surface-container p-1 rounded-full text-[11px] font-bold sticky top-0 z-10 backdrop-blur-md">
+<button class="flex-1 py-1 rounded-full bg-primary text-on-primary shadow-xs" id="m1-f-1" onclick="filterMode1('official')">Gov Directives</button>
+<button class="flex-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface" id="m1-f-2" onclick="filterMode1('ai')">AI Predictions</button>
+<button class="flex-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface" id="m1-f-3" onclick="filterMode1('updates')">Local Updates</button>
+</div>
+<!-- Alert Item 1: Joshimath -->
+<div class="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-error shadow-xs transition-all" onclick="openDetailsSidebar('joshimath')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] font-bold text-error flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span> CRITICAL • SECTION 144
+        </span>
+<span class="text-[11px] text-on-surface-variant">04m ago</span>
+</div>
+<h3 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary transition-colors">Joshimath Ravigram Sector</h3>
+<p class="text-[11px] text-on-surface-variant mt-1 line-clamp-2">Slope subsidence acceleration detected. Factor of Safety degraded to 0.84. 14 units flagged for emergency relocation.</p>
+<div class="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-primary">
+<span class="">FoS: 0.84 | Rain: 84mm/h</span>
+<span class="flex items-center gap-0.5 group-hover:underline">Details <span class="material-symbols-outlined text-xs">arrow_forward</span></span>
+</div>
+</div>
+<!-- Alert Item 2: Alaknanda -->
+<div class="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-error shadow-xs transition-all" onclick="openDetailsSidebar('alaknanda')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] font-bold text-error flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> FLASH FLOOD VECTOR
+        </span>
+<span class="text-[11px] text-on-surface-variant">12m ago</span>
+</div>
+<h3 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary transition-colors">Alaknanda Surge: Pipalkoti Hub</h3>
+<p class="text-[11px] text-on-surface-variant mt-1 line-clamp-2">Gauge station G-4 discharge crossed safe spillway capacity at 1,024 m³/s. Riverfront buffer cleared.</p>
+<div class="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-primary">
+<span class="">Discharge: 1,024 m³/s</span>
+<span class="flex items-center gap-0.5 group-hover:underline">Details <span class="material-symbols-outlined text-xs">arrow_forward</span></span>
+</div>
+</div>
+<!-- Alert Item 3: Chamoli Slip -->
+<div class="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-tertiary-container shadow-xs transition-all" onclick="openDetailsSidebar('chamoli')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] font-bold text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span> HIGH SLIP RISK • ROAD CUT
+        </span>
+<span class="text-[11px] text-on-surface-variant">28m ago</span>
+</div>
+<h3 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary transition-colors">Chamoli NH-58 Blockade Slip</h3>
+<p class="text-[11px] text-on-surface-variant mt-1 line-clamp-2">Talus debris rockfall at KM post 214. Highway completely severed. Reroute via Helang bypass.</p>
+<div class="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-tertiary">
+<span class="">NH-58 Blocked</span>
+<span class="flex items-center gap-0.5 text-primary group-hover:underline font-bold">Details <span class="material-symbols-outlined text-xs">arrow_forward</span></span>
+</div>
+</div>
+</div>
+<!-- MODE 2 INNER LIST -->
+<div class="flex-1 overflow-y-auto p-3.5 space-y-2.5 tactical-scroll hidden" id="mode-2-content">
+<!-- Sub Tabs inside Mode 2 -->
+<div class="flex items-center gap-1 bg-surface-container p-1 rounded-full text-[11px] font-bold sticky top-0 z-10 backdrop-blur-md">
+<button class="flex-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface" id="m2-tab-queues" onclick="switchMode2SubTab('queues')">Habitations</button>
+<button class="flex-1 py-1 rounded-full bg-primary text-on-primary shadow-xs" id="m2-tab-shelters" onclick="switchMode2SubTab('shelters')">Safe Shelters</button>
+<button class="flex-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface" id="m2-tab-timelines" onclick="switchMode2SubTab('timelines')">Gazette</button>
+</div>
+<!-- Habitations Subpanel -->
+<div class="space-y-2.5 hidden" id="m2-panel-queues">
+<div class="flex items-center justify-between text-[11px] font-bold">
+<span class="text-on-surface uppercase tracking-wider">Relocation Priority Queue</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed">1,840 Families</span>
+</div>
+<!-- Habitation 1: Joshimath Ravigram -->
+<div class="p-3 rounded-2xl bg-surface-container-low border-l-4 border-error shadow-xs hover:shadow-md transition-all cursor-pointer group" onclick="openDetailsSidebar('joshimath')">
+<div class="flex items-center justify-between mb-1 text-[11px]">
+<span class="font-bold text-error flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span> Rank #1 • Immediate (0-3M)</span>
+<span class="text-on-surface-variant">412 Families</span>
+</div>
+<h4 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary transition-colors">Joshimath Ravigram Sector</h4>
+<p class="text-[11px] text-on-surface-variant mt-0.5">Displacement rate 14.2 mm/day. 68 structures red-flagged.</p>
+<div class="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold">
+<span class="text-error">FoS: 0.84</span>
+<span class="text-primary group-hover:underline">Inspect Details →</span>
+</div>
+</div>
+<!-- Habitation 2: Sunil Ward -->
+<div class="p-3 rounded-2xl bg-surface-container-low border-l-4 border-tertiary-container shadow-xs hover:shadow-md transition-all cursor-pointer group" onclick="openDetailsSidebar('sunil_ward')">
+<div class="flex items-center justify-between mb-1 text-[11px]">
+<span class="font-bold text-tertiary flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span> Rank #2 • Short-term (3-12M)</span>
+<span class="text-on-surface-variant">630 Families</span>
+</div>
+<h4 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary transition-colors">Sunil Ward Upper Terrace</h4>
+<p class="text-[11px] text-on-surface-variant mt-0.5">Slope angle 34°. High groundwater pressure registered.</p>
+<div class="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold">
+<span class="text-tertiary">FoS: 1.08</span>
+<span class="text-primary group-hover:underline">Inspect Details →</span>
+</div>
+</div>
+</div>
+<!-- Safe Shelters Subpanel -->
+<div class="space-y-2.5" id="m2-panel-shelters">
+<div class="flex items-center justify-between text-[11px] font-bold">
+<span class="text-on-surface uppercase tracking-wider">Active Safe Shelters</span>
+<span class="px-2 py-0.5 rounded-full bg-[#2e7d32] text-white">3 Operational</span>
+</div>
+<div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/80 shadow-xs hover:shadow-md transition-all cursor-pointer group" onclick="openDetailsSidebar('shelter_gauchar')">
+<div class="flex items-center justify-between mb-1 text-[11px] font-bold">
+<span class="text-[#2e7d32] flex items-center gap-1"><span class="material-symbols-outlined text-xs">night_shelter</span> Terminal 01 (Airstrip)</span>
+<span class="text-[#2e7d32]">58 Beds Free</span>
+</div>
+<h4 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary">Gauchar Field Station Airstrip</h4>
+<p class="text-[11px] text-on-surface-variant mt-0.5">Primary staging center with triage, helipad, and rations.</p>
+<div class="mt-2 text-[11px] font-bold flex justify-between pt-1.5 border-t border-outline-variant/60">
+<span class="text-on-surface-variant">Capacity: 142/200 (71%)</span>
+<span class="text-primary group-hover:underline">Inspect Details →</span>
+</div>
+</div>
+</div>
+<!-- Gazette Timelines Subpanel -->
+<div class="space-y-2.5 hidden" id="m2-panel-timelines">
+<div class="flex items-center justify-between text-[11px] font-bold">
+<span class="text-on-surface uppercase tracking-wider">Government Gazette Orders</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed">UK-2024-88</span>
+</div>
+<div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/80 shadow-xs hover:shadow-md transition-all cursor-pointer group" onclick="openDetailsSidebar('gazette')">
+<div class="flex items-center justify-between mb-1 text-[11px] font-bold">
+<span class="text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs">history_edu</span> Relief &amp; Compensation</span>
+<span class="text-on-surface-variant">Oct 12 Target</span>
+</div>
+<h4 class="font-heading font-bold text-xs text-on-surface group-hover:text-primary">Phase 1 DBT Ex-gratia Disbursement</h4>
+<p class="text-[11px] text-on-surface-variant mt-0.5">₹1.5 Lakh/family direct bank transfer to 412 red-tagged households.</p>
+<div class="mt-2 text-[11px] font-bold flex justify-between pt-1.5 border-t border-outline-variant/60">
+<span class="text-on-surface-variant">412 Beneficiaries</span>
+<span class="text-primary group-hover:underline">Inspect Details →</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Drawer Footer Actions -->
+<div class="p-3 border-t border-outline-variant/80 bg-surface-container/60 backdrop-blur-sm flex flex-col gap-2">
+<button class="w-full py-2.5 rounded-full bg-secondary-container hover:bg-secondary-fixed text-on-secondary-container font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 hidden" id="volunteer-modal-btn" onclick="document.getElementById('volunteer-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-base">assignment_ind</span>
+<span class="">Apply as Volunteer</span>
+</button>
+<div class="flex items-center justify-between text-[11px] font-bold px-1 text-on-surface-variant" id="drawer-bottom-links">
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">tune</span> Map Settings
+      </button>
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">layers</span> Legend Layers
+      </button>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 4. SECONDARY FLOATING DETAILS SIDEBAR (Opens on Marker or List Click)     -->
+<!-- (Wireframe: 'alert clicking opening this page for more details')           -->
+<!-- ========================================================================= -->
+<aside class="fixed left-4 top-20 bottom-4 z-40 w-80 md:w-[26rem] max-w-[calc(100vw-2rem)] bg-surface-container-lowest/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden transition-all duration-300 hidden" id="details-sidebar">
+<!-- Sidebar Header -->
+<div class="p-3.5 border-b border-outline-variant/80 flex items-center justify-between bg-surface-container/80">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 bg-error-container text-on-error-container" id="sidebar-badge">
+<span class="material-symbols-outlined text-xs">crisis_alert</span>
+<span id="sidebar-badge-text" class="">CRITICAL • SECTION 144</span>
+</span>
+<span class="text-[11px] text-on-surface-variant font-mono" id="sidebar-meta">#UK-2024-JOS-09</span>
+</div>
+<button class="p-1 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-colors" onclick="closeDetailsSidebar()" title="Close Details">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-4 space-y-4 tactical-scroll">
+<div>
+<h3 class="font-heading font-bold text-base text-on-surface" id="sidebar-title">Joshimath Ravigram Sector</h3>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed" id="sidebar-desc">Severe subsurface subsidence. Inclinometer string #4 indicates active displacement of 14mm/24h. 14 residential units flagged red under Section 144.</p>
+</div>
+<!-- Quantitative Telemetry Values for Normal Users & Officials -->
+<div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-surface block mb-1.5">Quantitative Telemetry Values</span>
+<div class="grid grid-cols-3 gap-2 p-2.5 rounded-2xl bg-surface-container border border-outline-variant text-center font-mono">
+<div>
+<div class="text-[10px] text-on-surface-variant">Safety FoS</div>
+<div class="text-xs font-bold text-error mt-0.5" id="sidebar-v1">0.84 Crit</div>
+</div>
+<div>
+<div class="text-[10px] text-on-surface-variant">Precipitation</div>
+<div class="text-xs font-bold text-primary mt-0.5" id="sidebar-v2">84 mm/h</div>
+</div>
+<div>
+<div class="text-[10px] text-on-surface-variant">Saturation</div>
+<div class="text-xs font-bold text-error mt-0.5" id="sidebar-v3">92% High</div>
+</div>
+</div>
+</div>
+<!-- Official Guidelines -->
+<div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/70 space-y-1">
+<h4 class="font-heading font-bold text-xs text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-sm">policy</span>
+<span class="">Official Guidelines</span>
+</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed" id="sidebar-directives">Section 144 enforced. Civilians must immediately evacuate red-flagged structures to Gauchar Staging Hub via designated bypass.</p>
+</div>
+<!-- Verified Geo-Cam Evidence Thumbnails -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-[11px] font-bold uppercase tracking-wider text-on-surface">Verified Geo-Cam Ground Evidence</span>
+<span class="text-[10px] text-[#2e7d32] font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-xs">verified</span> GPS Verified
+        </span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="rounded-xl overflow-hidden border border-outline-variant relative">
+<img alt="Fissure Ground Truth" class="w-full h-20 object-cover" id="sidebar-thumb-1" src="https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&amp;fit=crop&amp;w=600&amp;q=80">
+<span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] font-mono">Cam JOS-1</span>
+</div>
+<div class="rounded-xl overflow-hidden border border-outline-variant relative">
+<img alt="River Bank Gauge" class="w-full h-20 object-cover" id="sidebar-thumb-2" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&amp;fit=crop&amp;w=600&amp;q=80">
+<span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] font-mono">Gauge G4</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Footer with Expand Button (Wireframe: 'expand' button) -->
+<div class="p-3 border-t border-outline-variant bg-surface-container flex items-center gap-2">
+<button class="flex-1 py-2.5 rounded-full bg-primary text-on-primary font-heading font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-primary-container active:scale-95 shadow-sm transition-all" onclick="expandCurrentReport()">
+<span class="">Expand Full Report</span>
+<span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+<button class="p-2.5 rounded-full bg-surface-container-high text-on-surface hover:bg-surface-container-highest active:scale-95 transition-all" onclick="alert('Map recentered on coordinate target.')" title="Center on Map">
+<span class="material-symbols-outlined text-base">center_focus_strong</span>
+</button>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 5. DEDICATED FULL REPORT INSPECTION OVERLAY (/report/:id)                -->
+<!-- (Wireframe: '/report/:id' page with alert severity, other details,         -->
+<!-- official guidelines, report create report, images verified with Geo CAm)    -->
+<!-- ========================================================================= -->
+<div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" id="report-modal" onclick="event.stopPropagation()">
+<div class="bg-surface-container-lowest w-full max-w-4xl max-h-[92vh] rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden">
+<!-- Header with Alert Severity -->
+<div class="p-4 sm:p-5 border-b border-outline-variant bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant transition-colors" onclick="closeReportModal()" title="Back to Map View">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+</button>
+<div>
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#2e7d32]/20 text-[#1b5e20]" id="modal-tag">SAFE TERMINAL • VERIFIED</span>
+<span class="text-xs text-on-surface-variant font-mono" id="modal-id">Record #SHELTER-GAUCHAR-01</span>
+</div>
+<h3 class="font-heading font-bold text-lg text-on-surface mt-0.5" id="modal-title">Gauchar Field Station Airstrip Incident Dossier</h3>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="hidden sm:flex px-3.5 py-1.5 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-heading font-bold items-center gap-1 transition-all" onclick="alert('Exporting sealed official telemetry PDF...')">
+<span class="material-symbols-outlined text-sm">download</span> Export PDF
+        </button>
+<button class="p-2 rounded-full hover:bg-surface-container-high text-on-surface-variant" onclick="closeReportModal()">
+<span class="material-symbols-outlined text-lg">close</span>
+</button>
+</div>
+</div>
+<!-- Modal Body -->
+<div class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 tactical-scroll">
+<!-- Alert Severity Banner -->
+<div class="p-4 rounded-2xl bg-error-container border border-error/30 text-on-error-container flex items-start gap-3">
+<span class="material-symbols-outlined text-2xl text-error shrink-0">report</span>
+<div>
+<div class="font-heading font-bold text-sm" id="modal-banner-title">Live Telemetry Dossier: Gauchar Field Station Airstrip</div>
+<p class="text-xs mt-0.5 leading-relaxed" id="modal-banner-desc">Primary safe transit shelter. Capacity 200 beds (58 beds available). Equipped with medical triage, 12,000L potable water, and emergency helipad.</p>
+</div>
+</div>
+<!-- Other Details for Normal Users to Understand (Quantitative Values) -->
+<div>
+<h4 class="font-heading font-bold text-xs uppercase tracking-wider text-on-surface mb-2 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-base">speed</span> Quantitative Telemetry Values
+        </h4>
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center font-mono">
+<div class="p-3 rounded-2xl bg-surface-container border border-outline-variant">
+<div class="text-[10px] text-on-surface-variant font-sans">Factor of Safety</div>
+<div class="text-base font-bold text-error mt-0.5" id="deep-fos">2.40 Safe</div>
+<div class="text-[10px] text-error">Unstable (&lt;1.0)</div>
+</div>
+<div class="p-3 rounded-2xl bg-surface-container border border-outline-variant">
+<div class="text-[10px] text-on-surface-variant font-sans">Rainfall Rate</div>
+<div class="text-base font-bold text-primary mt-0.5" id="deep-rain">12 mm/h</div>
+<div class="text-[10px] text-primary">Heavy Monsoonal</div>
+</div>
+<div class="p-3 rounded-2xl bg-surface-container border border-outline-variant">
+<div class="text-[10px] text-on-surface-variant font-sans">Soil Saturation</div>
+<div class="text-base font-bold text-error mt-0.5" id="deep-sat">22% Safe</div>
+<div class="text-[10px] text-error">Critical High</div>
+</div>
+<div class="p-3 rounded-2xl bg-surface-container border border-outline-variant">
+<div class="text-[10px] text-on-surface-variant font-sans">Pore Pressure</div>
+<div class="text-base font-bold text-on-surface mt-0.5" id="deep-pressure">40 kPa</div>
+<div class="text-[10px] text-error">+18% Surge</div>
+</div>
+<div class="p-3 rounded-2xl bg-surface-container border border-outline-variant col-span-2 sm:col-span-1">
+<div class="text-[10px] text-on-surface-variant font-sans">Slope Tilt</div>
+<div class="text-base font-bold text-tertiary mt-0.5" id="deep-tilt">0.0° Flat</div>
+<div class="text-[10px] text-tertiary">Active Creep</div>
+</div>
+</div>
+</div>
+<!-- Official Guidelines -->
+<div class="p-4 rounded-2xl bg-surface-container border border-outline-variant">
+<h4 class="font-heading font-bold text-xs uppercase tracking-wider text-on-surface flex items-center gap-1.5 mb-2">
+<span class="material-symbols-outlined text-primary text-base">gavel</span> Official Guidelines &amp; Section 144 Directives
+        </h4>
+<ol class="text-xs text-on-surface-variant space-y-1.5 list-decimal list-inside leading-relaxed">
+<li class="">Mandatory evacuation for premises marked with red CBRI spray tags prior to 18:00 hrs.</li>
+<li class="">Do not traverse the NH-58 canyon road; follow marked green transit corridor towards Gauchar Hub.</li>
+<li class="">Registration tokens are compulsory for Direct Benefit Transfer (DBT) ex-gratia claims.</li>
+<li class="">Offline radios must remain tuned to emergency disaster broadcast frequency 102.4 MHz FM.</li>
+</ol>
+</div>
+<!-- Report Section with Create Report & Images Verified with Geo-Cam -->
+<div>
+<div class="flex items-center justify-between mb-2.5">
+<div>
+<h4 class="font-heading font-bold text-xs uppercase tracking-wider text-on-surface">Images by Other Users Verified with Geo Cam</h4>
+<p class="text-[11px] text-on-surface-variant">Hardware-signed evidence preventing misinformation and fake alarms</p>
+</div>
+<!-- Create Report Button (Wireframe: 'create report') -->
+<button class="px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-heading font-bold hover:bg-primary-container active:scale-95 transition-all shadow-xs flex items-center gap-1.5" onclick="document.getElementById('create-report-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-sm">add_a_photo</span>
+<span class="">Create Report</span>
+</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+<!-- Verified Evidence Card 1 -->
+<div class="rounded-2xl overflow-hidden border border-outline-variant bg-surface-container">
+<img alt="Field Capture 1" class="w-full h-36 object-cover" id="modal-img-1" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&amp;fit=crop&amp;w=600&amp;q=80">
+<div class="p-3 bg-surface-container-low text-[11px] space-y-1">
+<div class="flex items-center justify-between font-bold">
+<span class="text-primary font-mono">Hardware GPS: 30.556° N, 79.563° E</span>
+<span class="text-[#2e7d32] flex items-center gap-0.5"><span class="material-symbols-outlined text-xs">verified</span> CV Verified</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="">Clock Drift: 12s (Pass)</span>
+<span class="">Sensor: Sony IMX686 TEE</span>
+</div>
+</div>
+</div>
+<!-- Verified Evidence Card 2 -->
+<div class="rounded-2xl overflow-hidden border border-outline-variant bg-surface-container">
+<img alt="Field Capture 2" class="w-full h-36 object-cover" id="modal-img-2" src="https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&amp;fit=crop&amp;w=600&amp;q=80">
+<div class="p-3 bg-surface-container-low text-[11px] space-y-1">
+<div class="flex items-center justify-between font-bold">
+<span class="text-primary font-mono">Hardware GPS: 30.512° N, 79.521° E</span>
+<span class="text-[#2e7d32] flex items-center gap-0.5"><span class="material-symbols-outlined text-xs">verified</span> Geo-Crypt Pass</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="">Runoff: 4.8 m/s</span>
+<span class="">Station: UK-SDMA-G4</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-3.5 border-t border-outline-variant bg-surface-container flex items-center justify-between">
+<span class="text-[11px] font-mono text-on-surface-variant">Auth Registry: NDRF-UK-9042</span>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 rounded-full border border-outline text-on-surface text-xs font-heading font-bold" onclick="closeReportModal()">Back to Map</button>
+<button class="px-5 py-2 rounded-full bg-primary text-on-primary text-xs font-heading font-bold shadow-sm" onclick="closeReportModal()">Acknowledge</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- 6. CREATE REPORT / GROUND EVIDENCE SUBMISSION MODAL                       -->
+<!-- ========================================================================= -->
+<div class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4" id="create-report-modal">
+<div class="bg-surface-container-lowest w-full max-w-md rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-primary-container text-on-primary flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xl">add_a_photo</span>
+<h3 class="font-heading font-bold text-sm">Submit Geo-Cam Evidence</h3>
+</div>
+<button class="p-1 rounded-full hover:bg-white/20 text-on-primary" onclick="document.getElementById('create-report-modal').classList.add('hidden')">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<form class="p-4 space-y-3" onsubmit="event.preventDefault(); alert('Evidence cryptographically authenticated and submitted!'); document.getElementById('create-report-modal').classList.add('hidden');">
+<div>
+<label class="text-[11px] font-bold text-on-surface">Target Sector</label>
+<input class="w-full mt-1 p-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs focus:ring-1 focus:ring-primary focus:outline-none" required="" value="Joshimath Ravigram Sector">
+</div>
+<div>
+<label class="text-[11px] font-bold text-on-surface">Observation Notes</label>
+<textarea class="w-full mt-1 p-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs focus:ring-1 focus:ring-primary focus:outline-none" placeholder="Provide ground truth (fissure width, rockfall rate)..." required="" rows="3"></textarea>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container border border-outline-variant flex items-center justify-between text-xs">
+<span class="font-bold flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-base">camera</span> Hardware Camera</span>
+<button class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-bold text-[11px]" onclick="alert('Camera hardware interface engaged. Calibrating GPS...')" type="button">Snap Photo</button>
+</div>
+<div class="pt-2 flex justify-end gap-2">
+<button class="px-4 py-1.5 rounded-full border border-outline text-xs font-bold" onclick="document.getElementById('create-report-modal').classList.add('hidden')" type="button">Cancel</button>
+<button class="px-5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-xs" type="submit">Submit Evidence</button>
+</div>
+</form>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- 7. VOLUNTEER APPLICATION MODAL                                            -->
+<!-- ========================================================================= -->
+<div class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4" id="volunteer-modal">
+<div class="bg-surface-container-lowest w-full max-w-md rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-secondary-container text-on-secondary-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xl">volunteer_activism</span>
+<h3 class="font-heading font-bold text-sm">Emergency Volunteer Application</h3>
+</div>
+<button class="p-1 rounded-full hover:bg-secondary-container/50" onclick="document.getElementById('volunteer-modal').classList.add('hidden')">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<form class="p-4 space-y-3" onsubmit="event.preventDefault(); alert('Application submitted! NDRF team will coordinate shortly.'); document.getElementById('volunteer-modal').classList.add('hidden');">
+<div>
+<label class="text-[11px] font-bold text-on-surface">Full Name</label>
+<input class="w-full mt-1 p-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs focus:ring-1 focus:ring-primary focus:outline-none" placeholder="e.g. Major (Retd) Devendra Rawat" required="" type="text">
+</div>
+<div>
+<label class="text-[11px] font-bold text-on-surface">Contact Mobile</label>
+<input class="w-full mt-1 p-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs focus:ring-1 focus:ring-primary focus:outline-none" placeholder="+91 98765 43210" required="" type="tel">
+</div>
+<div>
+<label class="text-[11px] font-bold text-on-surface">Specialized Capability</label>
+<select class="w-full mt-1 p-2 rounded-xl bg-surface-container-low border border-outline-variant text-xs focus:ring-1 focus:ring-primary focus:outline-none">
+<option>4x4 Offroad Driver</option>
+<option>Paramedic / Doctor</option>
+<option>Ham Radio Operator</option>
+<option>Search &amp; Rescue Mountaineer</option>
+</select>
+</div>
+<div class="pt-2 flex justify-end gap-2">
+<button class="px-4 py-1.5 rounded-full border border-outline text-xs font-bold" onclick="document.getElementById('volunteer-modal').classList.add('hidden')" type="button">Cancel</button>
+<button class="px-5 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-xs" type="submit">Submit Application</button>
+</div>
+</form>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- 8. FLOATING RADAR HUD & CRISIS SOS                                        -->
+<!-- ========================================================================= -->
+<div class="hidden fixed top-20 right-4 z-40 w-80 rounded-3xl bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-2xl p-4" id="radar-hud-card">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/60 text-xs font-bold">
+<span class="flex items-center gap-1.5 text-on-surface"><span class="w-2 h-2 rounded-full bg-error animate-ping"></span> DOPPLER SATELLITE RADAR</span>
+<button class="text-outline hover:text-on-surface" onclick="document.getElementById('radar-hud-card').classList.add('hidden')"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<div class="relative w-full h-36 rounded-2xl overflow-hidden my-2.5 bg-[#141d26] border border-outline-variant flex items-center justify-center">
+<div class="absolute w-28 h-28 rounded-full border border-outline-variant/30"></div>
+<div class="absolute w-16 h-16 rounded-full border border-outline-variant/40"></div>
+<div class="absolute top-6 left-10 w-16 h-12 bg-error/70 rounded-full blur-md"></div>
+<div class="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-between text-white text-[10px] font-mono">
+<span class="">Severe Cell #09</span>
+<span class="text-amber-300 font-bold">114 mm/h</span>
+</div>
+</div>
+</div>
+<!-- Map Floating Controls (Bottom Right) -->
+<div class="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 pointer-events-auto">
+<button class="flex items-center gap-1.5 px-5 py-3 rounded-full bg-error text-on-error font-heading font-bold text-xs shadow-2xl hover:bg-error-container hover:text-on-error-container active:scale-95 transition-all ring-4 ring-error/30 animate-bounce" id="sos-trigger-btn" onclick="document.getElementById('sos-drawer').classList.toggle('hidden')">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">sos</span>
+<span class="">CRISIS SOS</span>
+</button>
+<div class="flex flex-col bg-surface-container-lowest/90 backdrop-blur-md rounded-full border border-outline-variant shadow-lg p-1 gap-1 text-on-surface">
+<button class="p-2 rounded-full hover:bg-surface-container-high active:scale-90 transition-all text-primary" onclick="alert('GPS locked: Kedarnath-Alaknanda Basin')" title="Recenter GPS">
+<span class="material-symbols-outlined text-lg">my_location</span>
+</button>
+<div class="w-full h-px bg-outline-variant"></div>
+<button class="p-2 rounded-full hover:bg-surface-container-high active:scale-90 transition-all" onclick="alert('Zoom In')" title="Zoom In">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high active:scale-90 transition-all" onclick="alert('Zoom Out')" title="Zoom Out">
+<span class="material-symbols-outlined text-lg">remove</span>
+</button>
+</div>
+</div>
+<!-- Emergency SOS Drawer Overlay -->
+<div class="fixed bottom-0 right-0 z-50 w-full sm:w-96 max-h-[80vh] bg-surface-container-lowest border-t sm:border-l border-outline-variant shadow-2xl rounded-t-3xl sm:rounded-tl-3xl sm:rounded-tr-none flex flex-col hidden" id="sos-drawer">
+<div class="p-3.5 border-b border-outline-variant bg-error-container text-on-error-container flex items-center justify-between rounded-t-3xl">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xl text-error">emergency_home</span>
+<h3 class="font-heading font-bold text-xs">NDRF Tactical SOS Dispatch</h3>
+</div>
+<button class="p-1 rounded-full hover:bg-error/20 text-on-error-container" onclick="document.getElementById('sos-drawer').classList.add('hidden')">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<div class="p-4 space-y-2.5 overflow-y-auto tactical-scroll">
+<a class="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant transition-colors" href="tel:1070">
+<div>
+<div class="font-heading font-bold text-xs text-on-surface">State Emergency SEOC</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Toll Free: 1070</div>
+</div>
+<span class="px-3 py-1 rounded-full bg-primary text-on-primary text-[11px] font-bold">Call Now</span>
+</a>
+<a class="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant transition-colors" href="tel:1077">
+<div>
+<div class="font-heading font-bold text-xs text-on-surface">Chamoli District Helpline</div>
+<div class="text-[11px] text-on-surface-variant font-mono">Hotline: 1077</div>
+</div>
+<span class="px-3 py-1 rounded-full bg-primary text-on-primary text-[11px] font-bold">Call Now</span>
+</a>
+<button class="w-full py-2.5 rounded-full bg-error text-on-error font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all mt-2" onclick="alert('Offline BLE Distress Beacon broadcasted to 4 peers.'); document.getElementById('sos-drawer').classList.add('hidden');">
+<span class="material-symbols-outlined text-sm">podcasts</span>
+<span class="">Broadcast BLE Mesh SOS (Offline)</span>
+</button>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- 9. SCRIPT LOGIC (Interactive Mode Switching, Sidebar Inspector, Modals)   -->
+<!-- ========================================================================= -->
+<script>
+  const ENTITY_DATA = {
+    'joshimath': {
+      id: '#UK-2024-JOS-09',
+      category: 'CRITICAL • SECTION 144',
+      badgeClass: 'bg-error-container text-on-error-container',
+      title: 'Joshimath Ravigram Sector',
+      meta: 'Geotech Sensor Array #JOS-02',
+      desc: 'Severe subsurface subsidence. Inclinometer string #4 indicates active displacement of 14mm/24h. 14 residential units flagged red under Section 144.',
+      telemetry: { fos: '0.84 Crit', rain: '84 mm/h', sat: '92% High', pore: '412 kPa', tilt: '3.8° / 24h' },
+      directives: 'Section 144 enforced. Civilians must immediately evacuate red-flagged structures to Gauchar Staging Hub via designated bypass.',
+      img1: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80',
+      img2: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80'
+    },
+    'alaknanda': {
+      id: '#UK-2024-ALAK-14',
+      category: 'FLASH FLOOD VECTOR',
+      badgeClass: 'bg-error-container text-on-error-container',
+      title: 'Alaknanda Surge: Pipalkoti Hub',
+      meta: 'River Gauge Station #G-04',
+      desc: 'Discharge has surged to 1,024 m³/s past safe spillway limit. High-altitude glacial lake runoffs affecting low-lying riverbanks.',
+      telemetry: { fos: '1.02 Warn', rain: '112 mm/h', sat: '98% Sat', pore: '380 kPa', tilt: '0.9° / 24h' },
+      directives: 'Clear all riverbed and flood-plain settlements. Riverside pilgrimage camps barred until water recedes.',
+      img1: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+      img2: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80'
+    },
+    'chamoli': {
+      id: '#UK-2024-NH58-214',
+      category: 'HIGH SLIP RISK • ROAD SEVERED',
+      badgeClass: 'bg-tertiary-container text-on-tertiary-container',
+      title: 'Chamoli NH-58 Blockade Slip',
+      meta: 'Highway Logistics KM Post 214',
+      desc: 'Talus debris slide triggered by heavy monsoonal runoff. NH-58 closed to civilian traffic. 3 PWD earth-movers actively operating on site.',
+      telemetry: { fos: '0.78 Block', rain: '68 mm/h', sat: '88% Mod', pore: '340 kPa', tilt: '4.2° / 24h' },
+      directives: 'Reroute all civilian convoys through Helang bypass. Heavy commercial transport halted at Rudraprayag barrier.',
+      img1: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80',
+      img2: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80'
+    },
+    'shelter_gauchar': {
+      id: '#SHELTER-GAUCHAR-01',
+      category: 'SAFE TERMINAL • VERIFIED',
+      badgeClass: 'bg-[#2e7d32]/20 text-[#1b5e20]',
+      title: 'Gauchar Field Station Airstrip',
+      meta: 'Designated Resettlement Hub 01',
+      desc: 'Primary safe transit shelter. Capacity 200 beds (58 beds available). Equipped with medical triage, 12,000L potable water, and emergency helipad.',
+      telemetry: { fos: '2.40 Safe', rain: '12 mm/h', sat: '22% Safe', pore: '40 kPa', tilt: '0.0° Flat' },
+      directives: 'Registration counters active 24/7. Immediate medical examination and dry ration kit issuance upon arrival.',
+      img1: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
+      img2: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80'
+    },
+    'sunil_ward': {
+      id: '#HABITATION-SUNIL-02',
+      category: 'RELOCATION • SHORT-TERM (3-12M)',
+      badgeClass: 'bg-tertiary-container text-on-tertiary-container',
+      title: 'Sunil Ward Upper Terrace',
+      meta: 'Sector B • 630 Families',
+      desc: 'Piezometer records heightened underground water pressure at 34° slope angle. Scheduled for orderly second-phase resettlement.',
+      telemetry: { fos: '1.08 Amber', rain: '72 mm/h', sat: '78% Mod', pore: '280 kPa', tilt: '1.4° / 24h' },
+      directives: 'Phase 2 surveys underway. Residents requested to keep essential property records handy for SDM enumeration.',
+      img1: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80',
+      img2: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80'
+    },
+    'gazette': {
+      id: '#UK-GOV-2024-88',
+      category: 'GAZETTE NOTIFICATION',
+      badgeClass: 'bg-primary-fixed text-on-primary-fixed',
+      title: 'Phase 1 DBT Ex-gratia Disbursement',
+      meta: 'Uttarakhand SDMA Executive Order',
+      desc: '₹1.5 Lakh/family direct ex-gratia compensation released for 412 immediately displaced families of Joshimath Red Zone.',
+      telemetry: { fos: 'N/A Gov', rain: 'N/A', sat: '412 Benef.', pore: '₹6.18 Cr', tilt: 'Oct 12 Due' },
+      directives: 'Ensure Aadhaar seed in bank accounts. Grievances may be filed at Chamoli SDM Camp Office or SEOC helpline 1070.',
+      img1: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80',
+      img2: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80'
+    }
+  };
+
+  let currentKey = 'joshimath';
+
+  function setMode(mode) {
+    const m1Btn = document.getElementById('mode-1-btn');
+    const m2Btn = document.getElementById('mode-2-btn');
+    const m1Content = document.getElementById('mode-1-content');
+    const m2Content = document.getElementById('mode-2-content');
+    const volunteerBtn = document.getElementById('volunteer-modal-btn');
+    const drawerHeadline = document.getElementById('drawer-headline');
+    const drawerSubtext = document.getElementById('drawer-subtext');
+    const drawerIcon = document.getElementById('drawer-icon');
+    const evacPoly = document.getElementById('evac-route-poly');
+
+    if (mode === 1) {
+      m1Btn.className = "flex items-center gap-1.5 bg-primary text-on-primary rounded-full px-4 py-2 text-xs font-heading font-bold transition-all active:scale-95 shadow-sm";
+      m2Btn.className = "flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface rounded-full px-4 py-2 text-xs font-heading font-bold transition-all active:scale-95";
+      m1Content.classList.remove('hidden');
+      m2Content.classList.add('hidden');
+      volunteerBtn.classList.add('hidden');
+      drawerHeadline.textContent = "Threat Radar & Alerts";
+      drawerSubtext.textContent = "Government Directives & AI Forewarning";
+      drawerIcon.textContent = "policy";
+      evacPoly.classList.add('hidden');
+    } else {
+      m2Btn.className = "flex items-center gap-1.5 bg-primary text-on-primary rounded-full px-4 py-2 text-xs font-heading font-bold transition-all active:scale-95 shadow-sm";
+      m1Btn.className = "flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface rounded-full px-4 py-2 text-xs font-heading font-bold transition-all active:scale-95";
+      m2Content.classList.remove('hidden');
+      m1Content.classList.add('hidden');
+      volunteerBtn.classList.remove('hidden');
+      drawerHeadline.textContent = "Relocation & Lifelines";
+      drawerSubtext.textContent = "Habitations, Shelters & Gazette Timelines";
+      drawerIcon.textContent = "alt_route";
+      evacPoly.classList.remove('hidden');
+    }
+  }
+
+  function switchMode2SubTab(tab) {
+    const tabs = ['queues', 'shelters', 'timelines'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`m2-tab-${t}`);
+      const panel = document.getElementById(`m2-panel-${t}`);
+      if (t === tab) {
+        btn.className = "flex-1 py-1 rounded-full bg-primary text-on-primary shadow-xs";
+        panel.classList.remove('hidden');
+      } else {
+        btn.className = "flex-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface";
+        panel.classList.add('hidden');
+      }
+    });
+  }
+
+  function filterMode1(filter) {
+    const filters = ['official', 'ai', 'updates'];
+    filters.forEach((f, idx) => {
+      const btn = document.getElementById(`m1-f-${idx + 1}`);
+      if (f === filter) {
+        btn.className = "flex-1 py-1 rounded-full bg-primary text-on-primary shadow-xs";
+      } else {
+        btn.className = "flex-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface";
+      }
+    });
+  }
+
+  function toggleDrawer() {
+    const drawer = document.getElementById('tactical-drawer');
+    drawer.classList.toggle('-translate-x-[115%]');
+  }
+
+  function openDetailsSidebar(key) {
+    currentKey = key;
+    const data = ENTITY_DATA[key] || ENTITY_DATA['joshimath'];
+
+    document.getElementById('sidebar-badge-text').textContent = data.category;
+    document.getElementById('sidebar-badge').className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${data.badgeClass}`;
+    document.getElementById('sidebar-meta').textContent = data.id;
+    document.getElementById('sidebar-title').textContent = data.title;
+    document.getElementById('sidebar-desc').textContent = data.desc;
+    document.getElementById('sidebar-v1').textContent = data.telemetry.fos;
+    document.getElementById('sidebar-v2').textContent = data.telemetry.rain;
+    document.getElementById('sidebar-v3').textContent = data.telemetry.sat;
+    document.getElementById('sidebar-directives').textContent = data.directives;
+    document.getElementById('sidebar-thumb-1').src = data.img1;
+    document.getElementById('sidebar-thumb-2').src = data.img2;
+
+    document.getElementById('details-sidebar').classList.remove('hidden');
+  }
+
+  function closeDetailsSidebar() {
+    document.getElementById('details-sidebar').classList.add('hidden');
+  }
+
+  function expandCurrentReport() {
+    const data = ENTITY_DATA[currentKey] || ENTITY_DATA['joshimath'];
+
+    document.getElementById('modal-tag').textContent = data.category;
+    document.getElementById('modal-tag').className = `px-2.5 py-0.5 rounded-full text-[11px] font-bold ${data.badgeClass}`;
+    document.getElementById('modal-id').textContent = `Record ${data.id}`;
+    document.getElementById('modal-title').textContent = `${data.title} Incident Dossier`;
+    document.getElementById('modal-banner-title').textContent = `Live Telemetry Dossier: ${data.title}`;
+    document.getElementById('modal-banner-desc').textContent = data.desc;
+
+    document.getElementById('deep-fos').textContent = data.telemetry.fos;
+    document.getElementById('deep-rain').textContent = data.telemetry.rain;
+    document.getElementById('deep-sat').textContent = data.telemetry.sat;
+    document.getElementById('deep-pressure').textContent = data.telemetry.pore;
+    document.getElementById('deep-tilt').textContent = data.telemetry.tilt;
+
+    document.getElementById('modal-img-1').src = data.img1;
+    document.getElementById('modal-img-2').src = data.img2;
+
+    document.getElementById('report-modal').classList.remove('hidden');
+  }
+
+  function closeReportModal() {
+    document.getElementById('report-modal').classList.add('hidden');
+  }
+
+  function handleMapCanvasClick(e) {
+    // Click outside to deselect
+    closeDetailsSidebar();
+  }
+</script>
+
+
+
+
+</body></html>
