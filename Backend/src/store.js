@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { fixtures } from './fixtures.js';
 
+// Keep route handlers independent of storage so local demos and PostGIS deployments share one API.
 const schemaUrl = new URL('./schema.sql', import.meta.url);
 
 function distanceMeters(lat1, lng1, lat2, lng2) {
@@ -18,6 +19,7 @@ export async function createStore({ databaseUrl = process.env.DATABASE_URL } = {
   let pool;
   let memory = structuredClone(fixtures);
 
+  // A missing DATABASE_URL intentionally selects process-local demo data instead of blocking startup.
   if (databaseUrl) {
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: databaseUrl, ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined });
@@ -74,6 +76,7 @@ export async function createStore({ databaseUrl = process.env.DATABASE_URL } = {
     },
     async nearestShelter(latitude, longitude) {
       if (pool) {
+        // Geography casts make the result a metre distance instead of a degree distance.
         const { rows } = await pool.query(
           `SELECT payload, ST_Distance(
              ST_SetSRID(ST_MakePoint((payload->>'longitude')::float8, (payload->>'latitude')::float8), 4326)::geography,
@@ -94,6 +97,7 @@ export async function createStore({ databaseUrl = process.env.DATABASE_URL } = {
     },
     async nearbyIncidents(latitude, longitude, radiusMeters) {
       if (pool) {
+        // Let PostGIS filter by radius in the database rather than loading every incident into Node.
         const { rows } = await pool.query(
           `SELECT payload, ST_Distance(
              ST_SetSRID(ST_MakePoint((payload->>'longitude')::float8, (payload->>'latitude')::float8), 4326)::geography,

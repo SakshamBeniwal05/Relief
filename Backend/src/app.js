@@ -1,6 +1,7 @@
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 
+// The HTTP app receives storage and transport dependencies so API behavior can be tested without servers.
 const collections = ['hazards', 'incidents', 'volunteers', 'shelters', 'habitations', 'timelines', 'directives', 'activity', 'evidence', 'beacons'];
 const volunteerStatuses = new Set(['approved', 'deployed', 'rejected']);
 const incidentStatuses = new Set(['verified', 'escalated', 'dismissed']);
@@ -28,6 +29,7 @@ function numberField(value, field, min, max) {
 }
 
 function coordinatesFrom(body) {
+  // Accept structured coordinates first, with the legacy display string as a compatibility fallback.
   const lat = body.latitude ?? body.coordinates?.lat ?? body.coordinates?.latitude;
   const lng = body.longitude ?? body.coordinates?.lng ?? body.coordinates?.longitude;
   if (lat !== undefined && lng !== undefined) {
@@ -126,6 +128,7 @@ export function createApp({ store, publish = () => {}, aiEngineUrl = process.env
       error: null,
     });
     publish('room-uttarakhand', 'ai:job:updated', job);
+    // Persist and acknowledge before contacting the separate process; its timeout/failure only updates this job.
     setImmediate(async () => {
       try {
         await store.update('aiJobs', job.id, { status: 'running', startedAt: new Date().toISOString() });

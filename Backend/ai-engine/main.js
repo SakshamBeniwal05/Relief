@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer } from 'node:http';
 
+// This process has its own listener so predictor failures cannot terminate the main Relief API.
 const app = express();
 const server = createServer(app);
 const port = Number(process.env.AI_ENGINE_PORT ?? 3100);
@@ -17,6 +18,7 @@ app.post('/api/predict', (req, res) => {
     return res.status(400).json({ error: 'jobId and at least one district record are required.' });
   }
 
+  // Demo risk score combines four normalized telemetry signals; replace this baseline with a validated model.
   const predictions = records.map((record) => {
     const rainRisk = (record.rainfallMmh / 150) * 25;
     const saturationRisk = (record.soilSaturationPct / 100) * 25;
@@ -44,6 +46,7 @@ app.post('/api/predict', (req, res) => {
 
 app.post('/simulate-crash', (req, res) => {
   res.status(202).json({ status: 'crash_requested', service: 'isolated-district-predictor' });
+  // Exit only this service after acknowledging the request; the API process is separate.
   setTimeout(() => server.close(() => process.exit(1)), 50);
 });
 

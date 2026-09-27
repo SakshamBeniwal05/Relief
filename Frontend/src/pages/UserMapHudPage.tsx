@@ -64,6 +64,7 @@ interface EntityEntry {
 
 const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
+// Convert backend IDs and shapes into stable keys used by the existing drawer and map selection handlers.
 const hazardKey = (entity: HazardEntity) => {
   const value = `${entity.id} ${entity.title}`.toLowerCase();
   if (value.includes('joshimath')) return 'joshimath';
@@ -151,6 +152,7 @@ export const UserMapHudPage: React.FC = () => {
 
   const refreshData = useCallback(async () => {
     try {
+      // Load the map's related collections together so each render uses a consistent backend snapshot.
       const [hazardData, shelterData, habitationData, timelineData, incidentData] = await Promise.all([
         apiRequest<HazardEntity[]>('/hazards'),
         apiRequest<ShelterRecord[]>('/shelters'),
@@ -263,6 +265,7 @@ export const UserMapHudPage: React.FC = () => {
     }).catch(() => {
       throw new Error('Location access is required to send a geolocated SOS packet.');
     });
+    // Reuse a local pseudonymous sender ID so relayed packets can be grouped without storing identity.
     const deviceHash = localStorage.getItem('relief_device_hash') || crypto.randomUUID();
     localStorage.setItem('relief_device_hash', deviceHash);
     await apiRequest('/sos/sync', {

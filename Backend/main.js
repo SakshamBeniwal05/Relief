@@ -3,6 +3,7 @@ import { Server } from 'socket.io';
 import { createApp } from './src/app.js';
 import { createStore } from './src/store.js';
 
+// The main API owns persistence and remains available when the optional AI service is down.
 const port = Number(process.env.PORT ?? 3000);
 
 if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_API_KEY) {
@@ -15,6 +16,7 @@ const app = createApp({
     store,
     publish: (room, event, payload) => io?.to(room).emit(event, payload),
 });
+// Attach Express first so Socket.IO can route its transport without double-writing REST responses.
 const server = createServer(app);
 io = new Server(server, {
     cors: { origin: process.env.FRONTEND_ORIGIN ?? '*' },

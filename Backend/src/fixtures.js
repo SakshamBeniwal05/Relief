@@ -1,3 +1,4 @@
+// Seed records keep the interface usable without live sensors; districtTelemetry is explicitly synthetic.
 const hazard = (id, category, title, meta, desc, telemetry, directives, coordinates) => ({
   id,
   category,

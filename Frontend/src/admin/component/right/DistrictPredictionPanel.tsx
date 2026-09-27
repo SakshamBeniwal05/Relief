@@ -44,6 +44,7 @@ const riskColor: Record<Prediction['riskLevel'], string> = {
   low: 'bg-[#dcfce7] text-[#166534]',
 };
 
+// This panel polls job status because inference runs in another process and may finish or fail asynchronously.
 export const DistrictPredictionPanel: React.FC = () => {
   const [districts, setDistricts] = useState<DistrictTelemetry[]>([]);
   const [jobs, setJobs] = useState<PredictionJob[]>([]);

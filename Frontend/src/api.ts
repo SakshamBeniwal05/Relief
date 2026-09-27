@@ -1,3 +1,4 @@
+// Centralize the API prefix, optional local admin token, and backend error format for all screens.
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
 const ADMIN_API_KEY = import.meta.env.VITE_ADMIN_API_KEY || '';
 
@@ -20,6 +21,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     throw error;
   }
 
+  // The backend wraps successful responses in { data }; unwrap it and preserve structured API errors.
   const body = await response.json().catch(() => null) as { data?: T; error?: { code?: string; message?: string } } | null;
   if (!response.ok) {
     const error = new Error(body?.error?.message || `Request failed (${response.status}).`) as ApiError;
