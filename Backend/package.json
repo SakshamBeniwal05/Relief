@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node main.js",
     "dev": "node --watch main.js",
+    "build": "node -e \"console.log('Backend ready')\"",
     "test": "node test_backend.js"
   },
   "keywords": [],
