@@ -30,7 +30,13 @@ import {
 } from '../admin/mockData';
 
 const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (import.meta.env.VITE_API_URL) {
+    let url = import.meta.env.VITE_API_URL.trim().replace(/\/+$/, '');
+    if (!url.endsWith('/api')) {
+      url = `${url}/api`;
+    }
+    return url;
+  }
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname || 'localhost';
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
