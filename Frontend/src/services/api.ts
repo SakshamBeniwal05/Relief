@@ -29,7 +29,16 @@ import {
   ADMIN_ACTIVITY_LOGS,
 } from '../admin/mockData';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname || 'localhost';
+    return `http://${hostname}:3000/api`;
+  }
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Helper to make resilient fetch requests with timeout and fallback
@@ -612,11 +621,18 @@ export async function broadcastEmergencyThreatAlert(
   return { success: true, data: alertData };
 }
 
-// Purge any previously stored proto alerts from localStorage so clean baseline is restored
+// Purge stale proto alerts from localStorage so clean baseline is restored on fresh session
 if (typeof window !== 'undefined') {
   try {
     localStorage.removeItem('sih_active_gov_directives');
-    localStorage.removeItem('sih_latest_broadcast');
+    const prev = localStorage.getItem('sih_latest_broadcast');
+    if (prev) {
+      const parsed = JSON.parse(prev);
+      const ageMs = Date.now() - (parsed._rx_timestamp || parsed._t || 0);
+      if (ageMs > 60000) {
+        localStorage.removeItem('sih_latest_broadcast');
+      }
+    }
   } catch (e) {
     // ignore
   }
@@ -812,6 +828,7 @@ export async function issueGazetteDirective(
     };
     addRuntimeGovernmentDirective(newGazetteOrder);
     sendWebSocketBroadcast('GAZETTE_ORDER', { order: newGazetteOrder, report: fallbackReport });
+    sendWebSocketBroadcast('BROADCAST_ALERT', alertData);
   } catch (err) {
     // ignore
   }

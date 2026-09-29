@@ -33,6 +33,8 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
+let pingInterval: any = null;
+
 function getWebSocketUrl(): string {
   if (typeof window === 'undefined') return 'ws://localhost:3000/ws';
   const hostname = window.location.hostname || 'localhost';
@@ -70,6 +72,18 @@ export function initWebSocketConnection(): WebSocket | null {
       } catch (err) {
         // ignore
       }
+
+      // Maintain active 10s keepalive ping to prevent proxy/browser timeout
+      if (pingInterval) clearInterval(pingInterval);
+      pingInterval = setInterval(() => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          try {
+            socket.send(JSON.stringify({ type: 'PING', timestamp: Date.now() }));
+          } catch (e) {
+            // ignore
+          }
+        }
+      }, 10000);
     };
 
     socket.onmessage = (event) => {
@@ -82,6 +96,7 @@ export function initWebSocketConnection(): WebSocket | null {
     };
 
     socket.onclose = (event) => {
+      if (pingInterval) clearInterval(pingInterval);
       console.warn(`⚠️ [WebSocket] Connection closed (code: ${event.code}). Scheduling reconnect...`);
       currentStatus = 'DISCONNECTED';
       socket = null;
@@ -90,6 +105,7 @@ export function initWebSocketConnection(): WebSocket | null {
     };
 
     socket.onerror = (err) => {
+      if (pingInterval) clearInterval(pingInterval);
       console.error('❌ [WebSocket] Socket error:', err);
       currentStatus = 'DISCONNECTED';
       notifyStatusChange();
@@ -126,32 +142,40 @@ function handleIncomingMessage(data: any, fromPeerChannel = false) {
   if (!data || !data.type) return;
 
   switch (data.type) {
+    case 'BROADCAST_ALERT':
     case 'EMERGENCY_ALERT': {
       const alert: EmergencyBroadcastAlert = data.payload;
+      if (!alert) return;
       console.log('🚨 [Live Alert Broadcast Received]:', alert.targetSector, alert.orderType);
 
-      // 1. Sync to transient session state (no permanent localStorage pollution)
+      const alertPayloadWithTimestamp = {
+        ...alert,
+        _rx_timestamp: Date.now(),
+      };
+
+      // 1. Sync to localStorage & sessionStorage so same-browser tabs fire the storage event
       try {
-        sessionStorage.setItem(
-          'sih_latest_broadcast',
-          JSON.stringify({ ...alert, _rx_timestamp: Date.now() })
-        );
+        localStorage.setItem('sih_latest_broadcast', JSON.stringify(alertPayloadWithTimestamp));
+        sessionStorage.setItem('sih_latest_broadcast', JSON.stringify(alertPayloadWithTimestamp));
       } catch (e) {
         // ignore
       }
 
       // 2. Register into transient active government directives so it showcases in Govt Directives during the session
       try {
+        const coords =
+          alert.sectorCoords ||
+          (alert as any).coordinates || { lat: 30.556, lng: 79.563 };
         const govDirective = {
           id: alert.id,
           order_code: `#${alert.id}`,
           sector: alert.targetSector,
           targetSector: alert.targetSector,
-          sectorKey: alert.targetSector.toLowerCase().split(' ')[0],
-          coordinates: alert.sectorCoords,
-          threatRadiusMeters: alert.threatRadiusMeters,
+          sectorKey: (alert.targetSector || '').toLowerCase().split(' ')[0],
+          coordinates: coords,
+          threatRadiusMeters: alert.threatRadiusMeters || 3200,
           orderType: alert.orderType || 'Official Emergency Government Directive',
-          authority: alert.authorizedBy,
+          authority: alert.authorizedBy || 'District Magistrate & SDRF Unified Command',
           directiveText: alert.directiveText,
           threat_severity: alert.threatSeverity || 'CRITICAL',
           threatCategory: alert.threatCategory || 'Multi-Hazard Threat',
@@ -174,7 +198,7 @@ function handleIncomingMessage(data: any, fromPeerChannel = false) {
       // 4. Relay across peer BroadcastChannel if received via WebSocket (fans out to same-browser tabs)
       if (!fromPeerChannel && peerChannel) {
         try {
-          peerChannel.postMessage(data);
+          peerChannel.postMessage({ type: 'EMERGENCY_ALERT', payload: alert });
         } catch (err) {
           // ignore
         }
@@ -243,6 +267,9 @@ export function sendWebSocketBroadcast(
     } catch (err) {
       console.error('[WebSocket] Failed to send broadcast over socket:', err);
     }
+  } else {
+    // If socket is disconnected, try reconnecting
+    initWebSocketConnection();
   }
 
   return false;

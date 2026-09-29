@@ -27,19 +27,23 @@ export function initWebSocketServer(server) {
       })
     );
 
-    // Sync latest active alert to newly connected clients
+    // Sync latest active alert to newly connected clients (only if fresh within 60s)
     if (store.emergency_alerts && store.emergency_alerts.length > 0) {
       const latest = store.emergency_alerts[0];
-      try {
-        ws.send(
-          JSON.stringify({
-            type: 'EMERGENCY_ALERT',
-            payload: latest,
-            isInitialSync: true,
-          })
-        );
-      } catch (err) {
-        // ignore
+      const alertTime = new Date(latest.created_at || latest.timestamp || Date.now()).getTime();
+      const ageMs = Date.now() - alertTime;
+      if (isNaN(ageMs) || ageMs < 60000) {
+        try {
+          ws.send(
+            JSON.stringify({
+              type: 'EMERGENCY_ALERT',
+              payload: latest,
+              isInitialSync: true,
+            })
+          );
+        } catch (err) {
+          // ignore
+        }
       }
     }
 
@@ -52,9 +56,8 @@ export function initWebSocketServer(server) {
           (message.type === 'BROADCAST_ALERT' || message.type === 'EMERGENCY_ALERT') &&
           message.payload
         ) {
-          // Store alert
-          if (!store.emergency_alerts) store.emergency_alerts = [];
-          store.emergency_alerts.unshift(message.payload);
+          // Store latest alert in memory only (not permanently stored across server reloads)
+          store.emergency_alerts = [message.payload];
 
           // Fan out to all connected clients
           broadcastWebSocket({

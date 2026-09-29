@@ -52,11 +52,16 @@ export const BroadcastAlertModal: React.FC<BroadcastAlertModalProps> = ({
 }) => {
   if (!alert) return null;
 
+  const alertCoords =
+    alert.sectorCoords ||
+    (alert as any).coordinates || { lat: 30.556, lng: 79.563 };
+  const uCoords = userCoords || { lat: 30.556, lng: 79.563 };
+
   const distanceMeters = calculateDistanceMeters(
-    userCoords.lat,
-    userCoords.lng,
-    alert.sectorCoords.lat,
-    alert.sectorCoords.lng
+    uCoords.lat,
+    uCoords.lng,
+    alertCoords.lat,
+    alertCoords.lng
   );
 
   // 20km impact buffer rule (identical to local update tracking: d <= R + 20 km)

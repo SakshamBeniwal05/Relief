@@ -25,8 +25,6 @@ import {
   updateVolunteerStatus,
   fetchGeoIncidents,
   updateIncidentStatus,
-  issueGazetteDirective,
-  broadcastEmergencyThreatAlert,
   fetchActivityLogs,
 } from '../services/api';
 import { initWebSocketConnection } from '../services/websocket';
@@ -112,8 +110,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-7">
               <AdminSosDirectives
-                onBroadcastDirective={(payload) => issueGazetteDirective(payload)}
-                onBroadcastAlert={(payload) => broadcastEmergencyThreatAlert(payload)}
+                onBroadcastDirective={() => {
+                  fetchActivityLogs().then((d) => d && setLogs(d));
+                }}
+                onBroadcastAlert={() => {
+                  fetchActivityLogs().then((d) => d && setLogs(d));
+                }}
               />
             </div>
             <div className="lg:col-span-5">

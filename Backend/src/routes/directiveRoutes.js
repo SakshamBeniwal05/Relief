@@ -291,26 +291,26 @@ router.post('/directives', async (req, res) => {
     report: reportDossier,
   });
 
-  // If BLE Mesh Siren is activated, also broadcast an emergency threat alert
-  if (pushBleMeshSiren) {
-    const sirenAlert = {
-      id: `ALERT-${Date.now()}`,
-      orderType: orderType || 'Section 144 Emergency Evacuation',
-      directiveText,
-      targetSector,
-      sectorCoords: coords,
-      threatRadiusMeters: Number(threatRadiusMeters),
-      threatCategory: detectedThreatCategory,
-      threatSeverity,
-      authorizedBy: authority,
-      timestamp: `${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} IST`,
-      liveWeather,
-    };
-    broadcastWebSocket({
-      type: 'EMERGENCY_ALERT',
-      payload: sirenAlert,
-    });
-  }
+  // Always broadcast Emergency Threat Alert to all citizen devices & HUDs
+  const sirenAlert = {
+    id: `ALERT-${Date.now()}`,
+    orderType: orderType || 'Section 144 Emergency Evacuation',
+    directiveText,
+    targetSector,
+    sectorCoords: coords,
+    threatRadiusMeters: Number(threatRadiusMeters),
+    threatCategory: detectedThreatCategory,
+    threatSeverity,
+    authorizedBy: authority,
+    timestamp: `${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} IST`,
+    liveWeather,
+    created_at: new Date().toISOString(),
+  };
+  store.emergency_alerts = [sirenAlert];
+  broadcastWebSocket({
+    type: 'EMERGENCY_ALERT',
+    payload: sirenAlert,
+  });
 
   res.status(201).json({
     status: 'success',
@@ -489,7 +489,8 @@ router.post('/directives/alert', async (req, res) => {
     created_at: new Date().toISOString(),
   };
 
-  // Broadcast to all WebSocket clients without permanently polluting baseline store tables
+  // Ephemeral in-memory store for newly connecting clients (transient, no permanent DB disk pollution)
+  store.emergency_alerts = [alertPayload];
 
   // Broadcast to all WebSocket clients!
   const clientCount = broadcastWebSocket({
