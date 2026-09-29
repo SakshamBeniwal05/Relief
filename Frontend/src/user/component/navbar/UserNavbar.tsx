@@ -43,7 +43,7 @@ export const UserNavbar: React.FC<UserNavbarProps> = ({
             <span className="material-symbols-outlined text-base">spa</span>
           </div>
           <span className="font-heading font-bold text-lg text-primary tracking-tight leading-none lowercase">
-            relife
+            Relief
           </span>
         </div>
 

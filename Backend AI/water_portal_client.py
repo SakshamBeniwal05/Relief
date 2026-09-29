@@ -34,7 +34,7 @@ def fetch_cwc_telemetry(district: str = "Chamoli", limit: int = 50):
     query_string = urllib.parse.urlencode(params)
     url = f"{NWDP_ENDPOINT}?{query_string}"
 
-    req = urllib.request.Request(url, headers={"User-Agent": "SIH26191-Relife-Command/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "SIH26191-Relief-Command/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             data = json.loads(response.read().decode("utf-8"))

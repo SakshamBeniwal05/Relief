@@ -127,7 +127,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <footer className="pt-4 pb-6 border-t border-outline-variant/40 flex flex-col sm:flex-row items-center justify-between text-xs text-outline gap-2 font-mono">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-              <span>SIH26191 Relife Command Engine v4.2.1 • National Disaster Management Authority</span>
+              <span>SIH26191 Relief Command Engine v4.2.1 • National Disaster Management Authority</span>
             </div>
             <div>
               Encrypted Gov-Mesh Protocol • Uttarakhand State Disaster Response Force (SDRF)
