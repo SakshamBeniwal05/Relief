@@ -50,3 +50,76 @@
     background: #7a7582;
   }
 }
+
+/* ==========================================================================
+   Tactical Drawer & Detail Sidebar Typography Scaling (+10% Boost)
+   Enhances legibility across cards, badges, directives, and telemetry
+   ========================================================================== */
+#tactical-drawer,
+#details-sidebar {
+  font-size: 1.1em;
+}
+
+#tactical-drawer .text-\[9px\],
+#tactical-drawer [class*="text-[9px]"],
+#details-sidebar .text-\[9px\],
+#details-sidebar [class*="text-[9px]"] {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+
+#tactical-drawer .text-\[10px\],
+#tactical-drawer [class*="text-[10px]"],
+#details-sidebar .text-\[10px\],
+#details-sidebar [class*="text-[10px]"] {
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+#tactical-drawer .text-\[11px\],
+#tactical-drawer [class*="text-[11px]"],
+#details-sidebar .text-\[11px\],
+#details-sidebar [class*="text-[11px]"] {
+  font-size: 12.1px !important;
+  line-height: 1.3 !important;
+}
+
+#tactical-drawer .text-xs,
+#tactical-drawer [class~="text-xs"],
+#details-sidebar .text-xs,
+#details-sidebar [class~="text-xs"] {
+  font-size: 0.825rem !important; /* 12px * 1.10 = 13.2px */
+  line-height: 1.25rem !important;
+}
+
+#tactical-drawer .text-sm,
+#tactical-drawer [class~="text-sm"],
+#details-sidebar .text-sm,
+#details-sidebar [class~="text-sm"] {
+  font-size: 0.9625rem !important; /* 14px * 1.10 = 15.4px */
+  line-height: 1.45rem !important;
+}
+
+#tactical-drawer .text-base,
+#tactical-drawer [class~="text-base"],
+#details-sidebar .text-base,
+#details-sidebar [class~="text-base"] {
+  font-size: 1.1rem !important; /* 16px * 1.10 = 17.6px */
+  line-height: 1.7rem !important;
+}
+
+#tactical-drawer .text-lg,
+#tactical-drawer [class~="text-lg"],
+#details-sidebar .text-lg,
+#details-sidebar [class~="text-lg"] {
+  font-size: 1.2375rem !important; /* 18px * 1.10 = 19.8px */
+  line-height: 1.9rem !important;
+}
+
+#tactical-drawer .text-xl,
+#tactical-drawer [class~="text-xl"],
+#details-sidebar .text-xl,
+#details-sidebar [class~="text-xl"] {
+  font-size: 1.375rem !important; /* 20px * 1.10 = 22px */
+  line-height: 2.1rem !important;
+}
