@@ -1409,32 +1409,174 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
             </div>
           )}
 
-          {/* Safe Shelters Subpanel */}
+          {/* Safe Shelters Subpanel: Immediate SDRF / NDRF & NGO Relief Camps */}
           {mode2SubTab === 'shelters' && (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-on-surface px-0.5">
-                <span>Active Safe Shelters</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#2e7d32] text-white text-[10px]">3 Operational</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-emerald-600 text-sm">night_shelter</span>
+                  Active Relief &amp; Transit Camps
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-bold">
+                  2 Camps Operational
+                </span>
               </div>
+
+              {/* CAMP 1: SDRF & NDRF Unified Emergency Transit Camp (Pipalkoti) */}
               <div
-                className="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/80 shadow-xs hover:shadow-md transition-all cursor-pointer group"
-                onClick={() => onSelectEntity('shelter_gauchar')}
+                className="p-3.5 rounded-2xl bg-surface-container-low border-l-4 border-emerald-600 border-y border-r border-outline-variant/80 shadow-xs hover:shadow-md hover:bg-surface-container transition-all cursor-pointer group space-y-2.5"
+                onClick={() => onSelectEntity('camp_pipalkoti')}
               >
-                <div className="flex items-center justify-between mb-1 text-[11px] font-bold">
-                  <span className="text-[#2e7d32] flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">night_shelter</span> Terminal 01 (Airstrip)
+                {/* Header Pill & Operational Status */}
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700 text-white flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    SDRF &amp; NDRF CAMP • 24/7 ACTIVE
                   </span>
-                  <span className="text-[#2e7d32]">58 Beds Free</span>
+                  <span className="text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                    #CAMP-PIPAL-01
+                  </span>
                 </div>
-                <h4 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary">
-                  Gauchar Field Station Airstrip
-                </h4>
-                <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed">
-                  Primary staging center with triage, helipad, and rations.
+
+                {/* Title & Command Agency */}
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
+                    SDRF &amp; NDRF Unified Emergency Transit Camp
+                  </h4>
+                  <p className="text-[11px] text-on-surface-variant font-medium mt-0.5">
+                    Agency: Uttarakhand SDRF 3rd Bn, NDRF &amp; Red Cross
+                  </p>
+                </div>
+
+                <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2">
+                  Frontline emergency staging ground on Pipalkoti Inter-College grounds. Provides rapid medical triage, family shelter pods, hot meals, and child protection for evacuees.
                 </p>
-                <div className="mt-2 text-[11px] font-bold flex justify-between pt-1.5 border-t border-outline-variant/60">
-                  <span className="text-on-surface-variant">Capacity: 142/200 (71%)</span>
-                  <span className="text-primary group-hover:underline">Inspect Details →</span>
+
+                {/* Quantitative Capacity & Bed Meters */}
+                <div className="p-2.5 rounded-xl bg-surface-container/70 border border-outline-variant/60 text-[10px] space-y-2">
+                  {/* Total Camp Capacity Bar */}
+                  <div>
+                    <div className="flex items-center justify-between font-mono font-bold mb-1">
+                      <span className="text-on-surface flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs text-emerald-600">group</span>
+                        Total Evacuee Capacity:
+                      </span>
+                      <span className="text-emerald-700 dark:text-emerald-400">
+                        210 Available <span className="text-on-surface-variant font-normal">/ 600 Total (65% Full)</span>
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-outline-variant/40 overflow-hidden">
+                      <div className="h-full bg-emerald-600 rounded-full" style={{ width: '65%' }} />
+                    </div>
+                  </div>
+
+                  {/* Medical Triage Beds */}
+                  <div className="flex items-center justify-between pt-1 border-t border-outline-variant/40 font-mono">
+                    <span className="text-on-surface font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs text-red-600">local_hospital</span>
+                      Medical Triage Beds:
+                    </span>
+                    <span className="font-bold text-red-600">
+                      18 Available <span className="text-on-surface-variant font-normal">/ 40 Total (6 ICU)</span>
+                    </span>
+                  </div>
+
+                  {/* Water, Rations & Sanitation Grid */}
+                  <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-outline-variant/40 text-[9px] text-on-surface-variant font-mono">
+                    <div>💧 Water: <span className="font-bold text-on-surface">16,000 L</span></div>
+                    <div>🍲 Food: <span className="font-bold text-on-surface">18 Days Rations</span></div>
+                    <div>🚽 Toilets: <span className="font-bold text-on-surface">24 Bio-Units</span></div>
+                    <div>🚑 Ambulances: <span className="font-bold text-on-surface">4 Mountain 4x4</span></div>
+                  </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="flex items-center justify-between pt-1 border-t border-outline-variant/60 text-[11px] font-bold">
+                  <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                    Pipalkoti Ground (NH-58 Bypass)
+                  </span>
+                  <span className="text-primary group-hover:underline flex items-center gap-0.5">
+                    Inspect Mini Report <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* CAMP 2: Chamoli District & NGO Humanitarian Safe Haven */}
+              <div
+                className="p-3.5 rounded-2xl bg-surface-container-low border-l-4 border-emerald-600 border-y border-r border-outline-variant/80 shadow-xs hover:shadow-md hover:bg-surface-container transition-all cursor-pointer group space-y-2.5"
+                onClick={() => onSelectEntity('camp_chamoli')}
+              >
+                {/* Header Pill & Operational Status */}
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700 text-white flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    DDMA &amp; NGO HAVEN • 24/7 ACTIVE
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                    #CAMP-CHAMOLI-02
+                  </span>
+                </div>
+
+                {/* Title & Command Agency */}
+                <div>
+                  <h4 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
+                    Chamoli District &amp; NGO Humanitarian Safe Haven
+                  </h4>
+                  <p className="text-[11px] text-on-surface-variant font-medium mt-0.5">
+                    Agency: Chamoli DDMA, NDRF Logistics &amp; SEWA Relief NGO
+                  </p>
+                </div>
+
+                <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2">
+                  Central district humanitarian camp housed across the Chamoli Sports Complex. Outfitted with family cubicles, pediatric wards, psycho-social counseling, and 24/7 community kitchens.
+                </p>
+
+                {/* Quantitative Capacity & Bed Meters */}
+                <div className="p-2.5 rounded-xl bg-surface-container/70 border border-outline-variant/60 text-[10px] space-y-2">
+                  {/* Total Camp Capacity Bar */}
+                  <div>
+                    <div className="flex items-center justify-between font-mono font-bold mb-1">
+                      <span className="text-on-surface flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs text-emerald-600">group</span>
+                        Total Evacuee Capacity:
+                      </span>
+                      <span className="text-emerald-700 dark:text-emerald-400">
+                        340 Available <span className="text-on-surface-variant font-normal">/ 850 Total (60% Full)</span>
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-outline-variant/40 overflow-hidden">
+                      <div className="h-full bg-emerald-600 rounded-full" style={{ width: '60%' }} />
+                    </div>
+                  </div>
+
+                  {/* Medical Triage Beds */}
+                  <div className="flex items-center justify-between pt-1 border-t border-outline-variant/40 font-mono">
+                    <span className="text-on-surface font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs text-red-600">local_hospital</span>
+                      Medical Triage Beds:
+                    </span>
+                    <span className="font-bold text-red-600">
+                      32 Available <span className="text-on-surface-variant font-normal">/ 60 Total (10 ICU/Pediatric)</span>
+                    </span>
+                  </div>
+
+                  {/* Water, Rations & Sanitation Grid */}
+                  <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-outline-variant/40 text-[9px] text-on-surface-variant font-mono">
+                    <div>💧 Water: <span className="font-bold text-on-surface">28,000 L (RO Unit)</span></div>
+                    <div>🍲 Food: <span className="font-bold text-on-surface">25 Days Rations</span></div>
+                    <div>🚽 Toilets: <span className="font-bold text-on-surface">36 Bio-Units</span></div>
+                    <div>🚌 Evac Vehicles: <span className="font-bold text-on-surface">6 Transit Buses</span></div>
+                  </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="flex items-center justify-between pt-1 border-t border-outline-variant/60 text-[11px] font-bold">
+                  <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                    Chamoli Sports Complex
+                  </span>
+                  <span className="text-primary group-hover:underline flex items-center gap-0.5">
+                    Inspect Mini Report <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                  </span>
                 </div>
               </div>
             </div>

@@ -1,3 +1,21 @@
+export interface ReliefCampData {
+  totalCapacity: number;
+  availableCapacity: number;
+  occupiedCapacity: number;
+  totalMedicalBeds: number;
+  availableMedicalBeds: number;
+  icuTriageBeds?: number;
+  operatingAgencies: string;
+  waterReserveLiters: number;
+  dailyWaterSupplyLiters?: number;
+  dryRationsDays: number;
+  bioToiletsCount: number;
+  powerAndComms: string;
+  ambulanceCount: number;
+  helipadDistance?: string;
+  admissionProtocol?: string;
+}
+
 export interface HazardEntity {
   id: string;
   category: string;
@@ -25,6 +43,8 @@ export interface HazardEntity {
   coreRadiusMeters?: number;
   impactRadiusMeters?: number;
   concentricRings?: ConcentricRing[];
+  isReliefCamp?: boolean;
+  campData?: ReliefCampData;
 }
 
 export interface HabitationRiskProfile {

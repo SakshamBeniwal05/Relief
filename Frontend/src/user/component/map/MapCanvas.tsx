@@ -663,17 +663,17 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 </div>
               </OverlayViewF>
 
-              {/* MARKER 5: SAFE SHELTER GAUCHAR AIRSTRIP HUB PIN */}
+              {/* MARKER 5: GREEN SAFE HABITATION GAUCHAR TABLELAND PIN */}
               <OverlayViewF
                 position={{ lat: 30.291, lng: 79.155 }}
                 mapPaneName={OVERLAY_MOUSE_TARGET}
-                getPixelPositionOffset={getOffset(-70, -35)}
+                getPixelPositionOffset={getOffset(-75, -35)}
               >
                 <div
                   className="cursor-pointer group relative pointer-events-auto"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelectEntity('shelter_gauchar');
+                    onSelectEntity('gauchar_safe');
                   }}
                 >
                   <div className="flex flex-col items-center">
@@ -682,12 +682,72 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                         className="material-symbols-outlined text-xl"
                         style={{ fontVariationSettings: "'FILL' 1" }}
                       >
-                        night_shelter
+                        verified_user
                       </span>
                     </div>
                     <div className="mt-1 px-3 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur-sm text-[#1b5e20] text-[11px] font-bold shadow-md border border-[#2e7d32]/40 flex items-center gap-1.5 whitespace-nowrap">
                       <span className="w-2 h-2 rounded-full bg-[#2e7d32]"></span>
-                      GREEN ZONE (SAFE) • Gauchar Hub ({gauchHab?.riskScore ?? 18.0}/100)
+                      GREEN ZONE (SAFE AREA) • Gauchar Tableland ({gauchHab?.riskScore ?? 18.0}/100)
+                    </div>
+                  </div>
+                </div>
+              </OverlayViewF>
+
+              {/* MARKER 6: SAFE CAMP 1 - SDRF & NDRF PIPALKOTI INTER-COLLEGE GROUND */}
+              <OverlayViewF
+                position={{ lat: 30.432, lng: 79.334 }}
+                mapPaneName={OVERLAY_MOUSE_TARGET}
+                getPixelPositionOffset={getOffset(-85, -35)}
+              >
+                <div
+                  className="cursor-pointer group relative pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectEntity('camp_pipalkoti');
+                  }}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg ring-4 ring-emerald-500/30 group-hover:scale-110 transition-transform">
+                      <span
+                        className="material-symbols-outlined text-xl"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        night_shelter
+                      </span>
+                    </div>
+                    <div className="mt-1 px-3 py-1 rounded-full bg-emerald-950/90 text-emerald-200 text-[11px] font-bold shadow-md border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      SDRF &amp; NDRF CAMP • Pipalkoti (210/600 Free • 18 Beds)
+                    </div>
+                  </div>
+                </div>
+              </OverlayViewF>
+
+              {/* MARKER 7: SAFE CAMP 2 - CHAMOLI SPORTS COMPLEX RELIEF HAVEN */}
+              <OverlayViewF
+                position={{ lat: 30.402, lng: 79.324 }}
+                mapPaneName={OVERLAY_MOUSE_TARGET}
+                getPixelPositionOffset={getOffset(-85, -35)}
+              >
+                <div
+                  className="cursor-pointer group relative pointer-events-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectEntity('camp_chamoli');
+                  }}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg ring-4 ring-emerald-500/30 group-hover:scale-110 transition-transform">
+                      <span
+                        className="material-symbols-outlined text-xl"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        night_shelter
+                      </span>
+                    </div>
+                    <div className="mt-1 px-3 py-1 rounded-full bg-emerald-950/90 text-emerald-200 text-[11px] font-bold shadow-md border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      DDMA &amp; NGO HAVEN • Chamoli (340/850 Free • 32 Beds)
                     </div>
                   </div>
                 </div>
@@ -946,26 +1006,74 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
                 </div>
               )}
 
-              {/* SAFE SHELTER PIN 1: GAUCHAR FIELD HUB (GREEN ZONE) */}
+              {/* SAFE ZONE PIN: GAUCHAR ALLUVIAL TABLELAND (GREEN ZONE RELOCATION STUDY) */}
               <div
-                className="absolute top-[66%] left-[74%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                className="absolute top-[72%] left-[78%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSelectEntity('shelter_gauchar');
+                  onSelectEntity('gauchar_safe');
                 }}
               >
                 <div className="relative flex flex-col items-center">
-                  <div className="w-11 h-11 rounded-full bg-[#2e7d32] text-white flex items-center justify-center shadow-lg ring-4 ring-[#2e7d32]/20 group-hover:scale-110 transition-transform">
+                  <div className="w-10 h-10 rounded-full bg-[#2e7d32] text-white flex items-center justify-center shadow-lg ring-4 ring-[#2e7d32]/20 group-hover:scale-110 transition-transform">
                     <span
-                      className="material-symbols-outlined text-xl"
+                      className="material-symbols-outlined text-lg"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      verified_user
+                    </span>
+                  </div>
+                  <div className="mt-1 px-2.5 py-0.5 rounded-full bg-surface-container-lowest/95 backdrop-blur-sm text-[#1b5e20] text-[10px] font-bold shadow-md border border-[#2e7d32]/40 flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2e7d32]"></span>
+                    GREEN ZONE (SAFE AREA) • Gauchar Tableland ({gauchHab?.riskScore ?? 18.0}/100)
+                  </div>
+                </div>
+              </div>
+
+              {/* RELIEF CAMP PIN 1: SDRF & NDRF PIPALKOTI TRANSIT CAMP */}
+              <div
+                className="absolute top-[56%] left-[64%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectEntity('camp_pipalkoti');
+                }}
+              >
+                <div className="relative flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg ring-4 ring-emerald-500/30 group-hover:scale-110 transition-transform">
+                    <span
+                      className="material-symbols-outlined text-lg"
                       style={{ fontVariationSettings: "'FILL' 1" }}
                     >
                       night_shelter
                     </span>
                   </div>
-                  <div className="mt-1 px-3 py-1 rounded-full bg-surface-container-lowest/95 backdrop-blur-sm text-[#1b5e20] text-[11px] font-bold shadow-md border border-[#2e7d32]/40 flex items-center gap-1.5 whitespace-nowrap">
-                    <span className="w-2 h-2 rounded-full bg-[#2e7d32]"></span>
-                    GREEN ZONE (SAFE) • Gauchar Hub ({gauchHab?.riskScore ?? 18.0}/100)
+                  <div className="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-950/90 text-emerald-200 text-[10px] font-bold shadow-md border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    SDRF &amp; NDRF CAMP • Pipalkoti (210/600 Free • 18 Beds)
+                  </div>
+                </div>
+              </div>
+
+              {/* RELIEF CAMP PIN 2: CHAMOLI SPORTS COMPLEX RELIEF HAVEN */}
+              <div
+                className="absolute top-[64%] left-[68%] -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectEntity('camp_chamoli');
+                }}
+              >
+                <div className="relative flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg ring-4 ring-emerald-500/30 group-hover:scale-110 transition-transform">
+                    <span
+                      className="material-symbols-outlined text-lg"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      night_shelter
+                    </span>
+                  </div>
+                  <div className="mt-1 px-2.5 py-0.5 rounded-full bg-emerald-950/90 text-emerald-200 text-[10px] font-bold shadow-md border border-emerald-500/40 flex items-center gap-1.5 whitespace-nowrap">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    DDMA &amp; NGO HAVEN • Chamoli (340/850 Free • 32 Beds)
                   </div>
                 </div>
               </div>

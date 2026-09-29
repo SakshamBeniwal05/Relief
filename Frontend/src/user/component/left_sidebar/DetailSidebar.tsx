@@ -30,6 +30,14 @@ export const DetailSidebar: React.FC<DetailSidebarProps> = ({
     ? 'left-4 md:left-[28.75rem] md:max-w-[calc(100vw-30.5rem)]'
     : 'left-4 max-w-[calc(100vw-2rem)]';
 
+  const isReliefCamp =
+    entity.isReliefCamp ||
+    entity.id.startsWith('#CAMP-') ||
+    entity.id.startsWith('SHELTER-') ||
+    entity.category.includes('CAMP') ||
+    entity.category.includes('SHELTER');
+  const camp = entity.campData;
+
   return (
     <aside
       className={`fixed top-20 bottom-4 z-40 w-[22rem] md:w-[28rem] bg-white text-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${positionClasses}`}
@@ -54,7 +62,9 @@ export const DetailSidebar: React.FC<DetailSidebarProps> = ({
             className={`px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 ${entity.badgeClass}`}
             id="sidebar-badge"
           >
-            <span className="material-symbols-outlined text-xs">crisis_alert</span>
+            <span className="material-symbols-outlined text-xs">
+              {isReliefCamp ? 'night_shelter' : 'crisis_alert'}
+            </span>
             <span>{entity.category}</span>
           </span>
           <span className="text-xs text-zinc-500 font-mono font-medium">{entity.id}</span>
@@ -76,191 +86,347 @@ export const DetailSidebar: React.FC<DetailSidebarProps> = ({
           <p className="text-xs text-zinc-600 mt-1 leading-relaxed">{entity.desc}</p>
         </div>
 
-        {/* Dynamic Risk Zoning & Relocation Score Panel */}
-        <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-primary text-sm">shield</span>
-              Dynamic Risk Zoning
-            </span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                entity.zone === 'RED'
-                  ? 'bg-error text-white'
-                  : entity.zone === 'YELLOW'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-[#2e7d32] text-white'
-              }`}
-            >
-              {entity.zone || 'RED'} ZONE • {entity.riskLevel || 'HIGH RISK'}
-            </span>
-          </div>
-
-          {/* 0-100 Gauge Needle Meter */}
-          <div>
-            <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
-              <span className="text-zinc-500 text-[11px]">0-100 RELOCATION RISK SCORE</span>
-              <span
-                className="text-lg font-black"
-                style={{
-                  color:
-                    entity.zone === 'RED' ? '#d32f2f' : entity.zone === 'YELLOW' ? '#ed6c02' : '#2e7d32',
-                }}
-              >
-                {entity.riskScore ?? 74.8} <span className="text-xs font-normal text-zinc-500">/ 100</span>
+        {/* 1. RELIEF CAMP CAPACITY DASHBOARD OR HAZARD DYNAMIC RISK ZONING */}
+        {isReliefCamp ? (
+          <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-emerald-700 text-sm">night_shelter</span>
+                Relief Camp Command
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700 text-white flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                24/7 ACTIVE
               </span>
             </div>
 
-            {/* Tri-color horizontal gauge gradient with score needle marker */}
-            <div className="relative pt-2 pb-1">
-              <div className="h-2.5 rounded-full w-full bg-linear-to-r from-emerald-500 via-amber-400 to-red-600 shadow-inner overflow-hidden" />
-              {/* Needle Indicator */}
-              <div
-                className="absolute top-0 -translate-x-1/2 flex flex-col items-center pointer-events-none transition-all duration-500"
-                style={{
-                  left: `${Math.min(97, Math.max(3, entity.riskScore ?? 74.8))}%`,
-                }}
-              >
-                <div className="w-2.5 h-2.5 rotate-45 bg-zinc-900 shadow-sm" />
+            {/* Total Evacuee Capacity Gauge */}
+            <div className="p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-mono font-bold">
+                <span className="text-zinc-600 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs text-emerald-600">group</span>
+                  Total Camp Capacity
+                </span>
+                <span className="text-sm font-black text-emerald-800">
+                  {camp?.availableCapacity ?? 210}{' '}
+                  <span className="text-xs font-normal text-zinc-500">
+                    / {camp?.totalCapacity ?? 600} Available
+                  </span>
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-zinc-100 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.round(
+                      (((camp?.totalCapacity ?? 600) - (camp?.availableCapacity ?? 210)) /
+                        (camp?.totalCapacity ?? 600)) *
+                        100
+                    )}%`,
+                  }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-mono text-zinc-500">
+                <span>Occupied: {(camp?.totalCapacity ?? 600) - (camp?.availableCapacity ?? 210)} people</span>
+                <span className="text-emerald-700 font-bold">
+                  {Math.round(
+                    (((camp?.totalCapacity ?? 600) - (camp?.availableCapacity ?? 210)) /
+                      (camp?.totalCapacity ?? 600)) *
+                      100
+                  )}% Occupancy
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-medium mt-0.5 font-mono">
-              <span className="text-emerald-700 font-bold">0 (LOW RISK)</span>
-              <span className="text-amber-700 font-bold">50 (MODERATE)</span>
-              <span className="text-red-700 font-bold">100 (HIGH RISK)</span>
+            {/* Medical Triage Beds Gauge */}
+            <div className="p-3 rounded-xl bg-white border border-red-100 shadow-2xs space-y-1">
+              <div className="flex items-center justify-between text-xs font-mono font-bold">
+                <span className="text-zinc-700 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs text-red-600">local_hospital</span>
+                  Medical Triage Beds
+                </span>
+                <span className="text-sm font-black text-red-600">
+                  {camp?.availableMedicalBeds ?? 18}{' '}
+                  <span className="text-xs font-normal text-zinc-500">
+                    / {camp?.totalMedicalBeds ?? 40} Free
+                  </span>
+                </span>
+              </div>
+              <div className="text-[11px] text-zinc-600 leading-tight">
+                Includes <span className="font-bold text-red-700">{camp?.icuTriageBeds ?? 6} Oxygen Triage Beds</span> • Doctors &amp; Paramedics on active 24/7 rotation.
+              </div>
+            </div>
+
+            {/* Operating Agencies Callout */}
+            <div className="p-2.5 rounded-xl bg-zinc-100/80 border border-zinc-200 text-xs">
+              <div className="text-[10px] font-mono uppercase font-bold text-zinc-500 mb-0.5">
+                Operating Command &amp; NGOs:
+              </div>
+              <div className="font-semibold text-zinc-900">
+                {camp?.operatingAgencies ?? 'Uttarakhand SDRF 3rd Bn, NDRF & Indian Red Cross'}
+              </div>
             </div>
           </div>
-
-          {/* Relocation Preparedness Action Callout */}
-          <div className="p-3 rounded-xl bg-white border border-zinc-200 space-y-1 shadow-2xs">
-            <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-zinc-900 flex items-center gap-1 font-heading">
-                <span className="material-symbols-outlined text-xs text-primary">alt_route</span>
-                Relocation Preparedness
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-primary text-sm">shield</span>
+                Dynamic Risk Zoning
               </span>
-              <span className="text-[11px] text-primary font-mono font-bold">
-                Priority #{entity.priorityRank || 1}
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  entity.zone === 'RED'
+                    ? 'bg-error text-white'
+                    : entity.zone === 'YELLOW'
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-[#2e7d32] text-white'
+                }`}
+              >
+                {entity.zone || 'RED'} ZONE • {entity.riskLevel || 'HIGH RISK'}
               </span>
             </div>
-            <p className="text-xs font-semibold text-zinc-900">
-              {entity.relocationPreparedness || 'Prepare for Immediate Relocation (0-3 Months)'}
-            </p>
-            {entity.actionProtocol && (
-              <p className="text-xs text-zinc-600 leading-relaxed pt-1 border-t border-zinc-100">
-                {entity.actionProtocol}
+
+            {/* 0-100 Gauge Needle Meter */}
+            <div>
+              <div className="flex items-center justify-between text-xs font-mono font-bold mb-1">
+                <span className="text-zinc-500 text-[11px]">0-100 RELOCATION RISK SCORE</span>
+                <span
+                  className="text-lg font-black"
+                  style={{
+                    color:
+                      entity.zone === 'RED' ? '#d32f2f' : entity.zone === 'YELLOW' ? '#ed6c02' : '#2e7d32',
+                  }}
+                >
+                  {entity.riskScore ?? 74.8} <span className="text-xs font-normal text-zinc-500">/ 100</span>
+                </span>
+              </div>
+
+              {/* Tri-color horizontal gauge gradient with score needle marker */}
+              <div className="relative pt-2 pb-1">
+                <div className="h-2.5 rounded-full w-full bg-linear-to-r from-emerald-500 via-amber-400 to-red-600 shadow-inner overflow-hidden" />
+                {/* Needle Indicator */}
+                <div
+                  className="absolute top-0 -translate-x-1/2 flex flex-col items-center pointer-events-none transition-all duration-500"
+                  style={{
+                    left: `${Math.min(97, Math.max(3, entity.riskScore ?? 74.8))}%`,
+                  }}
+                >
+                  <div className="w-2.5 h-2.5 rotate-45 bg-zinc-900 shadow-sm" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-medium mt-0.5 font-mono">
+                <span className="text-emerald-700 font-bold">0 (LOW RISK)</span>
+                <span className="text-amber-700 font-bold">50 (MODERATE)</span>
+                <span className="text-red-700 font-bold">100 (HIGH RISK)</span>
+              </div>
+            </div>
+
+            {/* Relocation Preparedness Action Callout */}
+            <div className="p-3 rounded-xl bg-white border border-zinc-200 space-y-1 shadow-2xs">
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="text-zinc-900 flex items-center gap-1 font-heading">
+                  <span className="material-symbols-outlined text-xs text-primary">alt_route</span>
+                  Relocation Preparedness
+                </span>
+                <span className="text-[11px] text-primary font-mono font-bold">
+                  Priority #{entity.priorityRank || 1}
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-zinc-900">
+                {entity.relocationPreparedness || 'Prepare for Immediate Relocation (0-3 Months)'}
               </p>
+              {entity.actionProtocol && (
+                <p className="text-xs text-zinc-600 leading-relaxed pt-1 border-t border-zinc-100">
+                  {entity.actionProtocol}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 2. CAMP LIFELINES & ESSENTIAL SUPPLIES MATRIX OR TWO-TIER IMPACT RADII */}
+        {isReliefCamp ? (
+          <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5 shadow-xs">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-primary text-sm">inventory_2</span>
+              Camp Supplies &amp; Lifelines Matrix
+            </span>
+            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+              <div className="p-2.5 rounded-xl bg-white border border-zinc-200">
+                <div className="text-[10px] text-zinc-500 font-sans font-semibold">Potable Water</div>
+                <div className="text-sm font-bold text-blue-700 mt-0.5">
+                  {(camp?.waterReserveLiters ?? 16000).toLocaleString()} L
+                </div>
+                <div className="text-[9px] text-zinc-500 font-sans">Jal Sansthan Bowser link</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white border border-zinc-200">
+                <div className="text-[10px] text-zinc-500 font-sans font-semibold">Community Kitchen</div>
+                <div className="text-sm font-bold text-amber-700 mt-0.5">
+                  {camp?.dryRationsDays ?? 18} Days Food
+                </div>
+                <div className="text-[9px] text-zinc-500 font-sans">Hot meals &amp; infant rations</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white border border-zinc-200">
+                <div className="text-[10px] text-zinc-500 font-sans font-semibold">Sanitation Units</div>
+                <div className="text-sm font-bold text-emerald-700 mt-0.5">
+                  {camp?.bioToiletsCount ?? 24} Mobile Toilets
+                </div>
+                <div className="text-[9px] text-zinc-500 font-sans">Dedicated female hygiene bays</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white border border-zinc-200">
+                <div className="text-[10px] text-zinc-500 font-sans font-semibold">Emergency Transport</div>
+                <div className="text-sm font-bold text-red-700 mt-0.5">
+                  {camp?.ambulanceCount ?? 4} Mountain 4x4
+                </div>
+                <div className="text-[9px] text-zinc-500 font-sans">Direct link to Base Hospital</div>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-white border border-zinc-200 text-xs">
+              <div className="text-[10px] text-zinc-500 font-mono font-bold uppercase">Emergency Comms &amp; Power:</div>
+              <div className="text-xs font-semibold text-zinc-800 mt-0.5">
+                {camp?.powerAndComms ?? '15 kVA Diesel Generator + BSNL Satellite Terminal + SDRF VHF Command Link'}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2 shadow-xs">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-zinc-700">
+              <span className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-primary text-sm">radar</span>
+                Two-Tier Impact Radii
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-200 text-zinc-800">
+                Ground vs AI
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {/* 1. Real Ground Impact Radius */}
+              <div className={`p-2 rounded-xl border flex flex-col justify-between ${
+                (entity.zone === 'RED' || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli'))
+                  ? 'bg-red-50 text-red-900 border-red-200'
+                  : (entity.zone === 'YELLOW' || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil'))
+                  ? 'bg-amber-50 text-amber-900 border-amber-200'
+                  : 'bg-emerald-50 text-emerald-900 border-emerald-200'
+              }`}>
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase">
+                  <span className={`w-2 h-2 rounded-full ${
+                    (entity.zone === 'RED' || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli'))
+                      ? 'bg-red-600'
+                      : (entity.zone === 'YELLOW' || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil'))
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-600'
+                  }`} />
+                  <span>1. Real Ground Radius</span>
+                </div>
+                <div className="mt-1">
+                  <div className="text-base font-black font-mono">
+                    {entity.title?.toLowerCase().includes('joshimath') ? '3.2 km' : entity.title?.toLowerCase().includes('chamoli') ? '2.4 km' : entity.title?.toLowerCase().includes('sunil') ? '2.1 km' : entity.title?.toLowerCase().includes('alaknanda') ? '4.8 km' : entity.title?.toLowerCase().includes('gauchar') ? '5.0 km' : '3.5 km'}
+                  </div>
+                  <div className="text-[10px] font-bold opacity-80">
+                    {entity.zone === 'RED' || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
+                      ? '🔴 Red (High Risk)'
+                      : entity.zone === 'YELLOW' || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
+                      ? '🟡 Yellow (Moderate)'
+                      : '🟢 Green (Safe Hub)'}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. AI Predicted Forewarning Radius */}
+              <div className={`p-2 rounded-xl border flex flex-col justify-between ${
+                (entity.riskScore ?? 75) >= 70 || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
+                  ? 'bg-purple-50 text-purple-900 border-purple-200'
+                  : (entity.riskScore ?? 75) >= 40 || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
+                  ? 'bg-blue-50 text-blue-900 border-blue-200'
+                  : 'bg-sky-50 text-sky-900 border-sky-200'
+              }`}>
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase">
+                  <span className={`w-2 h-2 rounded-full border border-dashed ${
+                    (entity.riskScore ?? 75) >= 70 || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
+                      ? 'bg-purple-600 border-purple-600'
+                      : (entity.riskScore ?? 75) >= 40 || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'bg-sky-500 border-sky-500'
+                  }`} />
+                  <span>2. AI Predicted Radius</span>
+                </div>
+                <div className="mt-1">
+                  <div className="text-base font-black font-mono">
+                    {entity.title?.toLowerCase().includes('joshimath') ? '5.2 km' : entity.title?.toLowerCase().includes('chamoli') ? '4.0 km' : entity.title?.toLowerCase().includes('sunil') ? '3.8 km' : entity.title?.toLowerCase().includes('alaknanda') ? '8.5 km' : entity.title?.toLowerCase().includes('gauchar') ? '12.0 km' : '5.2 km'}
+                  </div>
+                  <div className="text-[10px] font-bold opacity-80">
+                    {(entity.riskScore ?? 75) >= 70 || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
+                      ? '🟣 Purple (70-100)'
+                      : (entity.riskScore ?? 75) >= 40 || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
+                      ? '🔵 Blue (40-69.9)'
+                      : '💧 Light-Blue (0-39.9)'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. QUANTITATIVE TELEMETRY OR LIVE STATUS */}
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+            {isReliefCamp ? 'Live Camp Status Summary' : 'Quantitative Telemetry Values'}
+          </span>
+          <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-center font-mono">
+            {isReliefCamp ? (
+              <>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-sans font-semibold">Vacant Space</div>
+                  <div className="text-sm font-bold text-emerald-700 mt-0.5">
+                    {camp?.availableCapacity ?? 210} Free
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-sans font-semibold">Medical Beds</div>
+                  <div className="text-sm font-bold text-red-600 mt-0.5">
+                    {camp?.availableMedicalBeds ?? 18} Free
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-sans font-semibold">Food Supply</div>
+                  <div className="text-sm font-bold text-amber-600 mt-0.5">
+                    {camp?.dryRationsDays ?? 18}d
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-sans font-semibold">Safety FoS</div>
+                  <div className="text-sm font-bold text-red-600 mt-0.5">{entity.telemetry.fos}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-sans font-semibold">Precipitation</div>
+                  <div className="text-sm font-bold text-blue-600 mt-0.5">{entity.telemetry.rain}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500 font-sans font-semibold">Saturation</div>
+                  <div className="text-sm font-bold text-amber-600 mt-0.5">{entity.telemetry.sat}</div>
+                </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* Two-Tier Impact Radii: Real (Red, Yellow, Green) vs AI Predicted (Purple, Blue, Light-Blue) */}
-        <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2 shadow-xs">
-          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-zinc-700">
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-primary text-sm">radar</span>
-              Two-Tier Impact Radii
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-200 text-zinc-800">
-              Ground vs AI
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {/* 1. Real Ground Impact Radius (Red, Yellow, Green) */}
-            <div className={`p-2 rounded-xl border flex flex-col justify-between ${
-              (entity.zone === 'RED' || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli'))
-                ? 'bg-red-50 text-red-900 border-red-200'
-                : (entity.zone === 'YELLOW' || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil'))
-                ? 'bg-amber-50 text-amber-900 border-amber-200'
-                : 'bg-emerald-50 text-emerald-900 border-emerald-200'
-            }`}>
-              <div className="flex items-center gap-1 text-[10px] font-bold uppercase">
-                <span className={`w-2 h-2 rounded-full ${
-                  (entity.zone === 'RED' || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli'))
-                    ? 'bg-red-600'
-                    : (entity.zone === 'YELLOW' || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil'))
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-600'
-                }`} />
-                <span>1. Real Ground Radius</span>
-              </div>
-              <div className="mt-1">
-                <div className="text-base font-black font-mono">
-                  {entity.title?.toLowerCase().includes('joshimath') ? '3.2 km' : entity.title?.toLowerCase().includes('chamoli') ? '2.4 km' : entity.title?.toLowerCase().includes('sunil') ? '2.1 km' : entity.title?.toLowerCase().includes('alaknanda') ? '4.8 km' : entity.title?.toLowerCase().includes('gauchar') ? '5.0 km' : '3.5 km'}
-                </div>
-                <div className="text-[10px] font-bold opacity-80">
-                  {entity.zone === 'RED' || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
-                    ? '🔴 Red (High Risk)'
-                    : entity.zone === 'YELLOW' || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
-                    ? '🟡 Yellow (Moderate)'
-                    : '🟢 Green (Safe Hub)'}
-                </div>
-              </div>
-            </div>
-
-            {/* 2. AI Predicted Forewarning Radius (Purple, Blue, Light-Blue) */}
-            <div className={`p-2 rounded-xl border flex flex-col justify-between ${
-              (entity.riskScore ?? 75) >= 70 || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
-                ? 'bg-purple-50 text-purple-900 border-purple-200'
-                : (entity.riskScore ?? 75) >= 40 || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
-                ? 'bg-blue-50 text-blue-900 border-blue-200'
-                : 'bg-sky-50 text-sky-900 border-sky-200'
-            }`}>
-              <div className="flex items-center gap-1 text-[10px] font-bold uppercase">
-                <span className={`w-2 h-2 rounded-full border border-dashed ${
-                  (entity.riskScore ?? 75) >= 70 || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
-                    ? 'bg-purple-600 border-purple-600'
-                    : (entity.riskScore ?? 75) >= 40 || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
-                    ? 'bg-blue-600 border-blue-600'
-                    : 'bg-sky-500 border-sky-500'
-                }`} />
-                <span>2. AI Predicted Radius</span>
-              </div>
-              <div className="mt-1">
-                <div className="text-base font-black font-mono">
-                  {entity.title?.toLowerCase().includes('joshimath') ? '5.2 km' : entity.title?.toLowerCase().includes('chamoli') ? '4.0 km' : entity.title?.toLowerCase().includes('sunil') ? '3.8 km' : entity.title?.toLowerCase().includes('alaknanda') ? '8.5 km' : entity.title?.toLowerCase().includes('gauchar') ? '12.0 km' : '5.2 km'}
-                </div>
-                <div className="text-[10px] font-bold opacity-80">
-                  {(entity.riskScore ?? 75) >= 70 || entity.title?.toLowerCase().includes('joshimath') || entity.title?.toLowerCase().includes('chamoli')
-                    ? '🟣 Purple (70-100)'
-                    : (entity.riskScore ?? 75) >= 40 || entity.title?.toLowerCase().includes('alaknanda') || entity.title?.toLowerCase().includes('sunil')
-                    ? '🔵 Blue (40-69.9)'
-                    : '💧 Light-Blue (0-39.9)'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quantitative Telemetry Values */}
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
-            Quantitative Telemetry Values
-          </span>
-          <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-center font-mono">
-            <div>
-              <div className="text-[10px] text-zinc-500 font-sans font-semibold">Safety FoS</div>
-              <div className="text-sm font-bold text-red-600 mt-0.5">{entity.telemetry.fos}</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-zinc-500 font-sans font-semibold">Precipitation</div>
-              <div className="text-sm font-bold text-blue-600 mt-0.5">{entity.telemetry.rain}</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-zinc-500 font-sans font-semibold">Saturation</div>
-              <div className="text-sm font-bold text-amber-600 mt-0.5">{entity.telemetry.sat}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Official Guidelines */}
+        {/* 4. OFFICIAL GUIDELINES OR ADMISSION INSTRUCTIONS */}
         <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-1.5">
           <h4 className="font-heading font-bold text-sm text-zinc-900 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-primary text-base">policy</span>
-            <span>Official Guidelines</span>
+            <span className="material-symbols-outlined text-primary text-base">
+              {isReliefCamp ? 'assignment_turned_in' : 'policy'}
+            </span>
+            <span>{isReliefCamp ? 'Admission & Registration Protocol' : 'Official Guidelines'}</span>
           </h4>
-          <p className="text-xs text-zinc-600 leading-relaxed">{entity.directives}</p>
+          <p className="text-xs text-zinc-600 leading-relaxed">
+            {isReliefCamp && camp?.admissionProtocol ? camp.admissionProtocol : entity.directives}
+          </p>
         </div>
 
         {/* Verified Geo-Cam Evidence Thumbnails */}
@@ -325,7 +491,7 @@ export const DetailSidebar: React.FC<DetailSidebarProps> = ({
           onClick={onExpandReport}
           type="button"
         >
-          <span>Expand Full Report</span>
+          <span>{isReliefCamp ? 'Expand Camp Dossier' : 'Expand Full Report'}</span>
           <span className="material-symbols-outlined text-sm">open_in_new</span>
         </button>
         <button

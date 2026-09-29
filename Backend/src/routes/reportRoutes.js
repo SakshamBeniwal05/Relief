@@ -28,6 +28,123 @@ router.get('/reports/:id', (req, res) => {
     }
   }
 
+  // 1b. Dedicated Relief Camp Dossiers
+  if (entityId === 'camp_pipalkoti' || entityId === '#camp-sdrf-pipal-01') {
+    return res.json({
+      status: 'success',
+      data: {
+        report_id: 'DOSSIER-CAMP-PIPALKOTI-01',
+        generated_at_utc: new Date().toISOString(),
+        classification: 'OFFICIAL USE ONLY • DISASTER MANAGEMENT ACT 2005 • RELIEF CAMP AUDIT',
+        sector_name: 'SDRF & NDRF Unified Emergency Transit Camp',
+        zone_code: '#CAMP-SDRF-PIPAL-01',
+        risk_level: 'OPERATIONAL RELIEF CAMP',
+        isReliefCamp: true,
+        campData: {
+          totalCapacity: 600,
+          availableCapacity: 210,
+          occupiedCapacity: 390,
+          totalMedicalBeds: 40,
+          availableMedicalBeds: 18,
+          icuTriageBeds: 6,
+          operatingAgencies: 'Uttarakhand SDRF 3rd Bn, NDRF 8th Bn & Indian Red Cross Society',
+          waterReserveLiters: 16000,
+          dailyWaterSupplyLiters: 5000,
+          dryRationsDays: 18,
+          bioToiletsCount: 24,
+          powerAndComms: '15 kVA Diesel Generator + BSNL Satellite Terminal + SDRF VHF Command Link',
+          ambulanceCount: 4,
+          helipadDistance: '400m Drop-Zone',
+          admissionProtocol: 'Immediate token registration at Gate Counter 1. Vitals screening at Red Cross medical tent. Emergency transition kits issued upon family verification.',
+        },
+        active_directives: 'Registration counters active 24/7. Immediate medical vitals check and family allotment token issued at Gate Counter 1. Emergency ambulance shuttle operational to Base Hospital.',
+        evacuation_plan: {
+          primary_route: 'NH-58 Pipalkoti Transit Route',
+          staging_shelter: 'Pipalkoti Inter-College Ground Hub',
+          designated_helipad: 'Pipalkoti Emergency Helipad (400m)',
+        },
+        sign_off: {
+          nodal_officer: 'Maj. S. Negi, Camp Commandant (SDRF 3rd Bn)',
+          approval_stamp: 'DIGITAL_SEAL_UK_SDMA_RELIEF_CAMP',
+        },
+      },
+    });
+  }
+
+  if (entityId === 'camp_chamoli' || entityId === '#camp-ddma-chamoli-02') {
+    return res.json({
+      status: 'success',
+      data: {
+        report_id: 'DOSSIER-CAMP-CHAMOLI-02',
+        generated_at_utc: new Date().toISOString(),
+        classification: 'OFFICIAL USE ONLY • DISASTER MANAGEMENT ACT 2005 • RELIEF CAMP AUDIT',
+        sector_name: 'Chamoli District & NGO Humanitarian Safe Haven',
+        zone_code: '#CAMP-DDMA-CHAMOLI-02',
+        risk_level: 'OPERATIONAL RELIEF CAMP',
+        isReliefCamp: true,
+        campData: {
+          totalCapacity: 850,
+          availableCapacity: 340,
+          occupiedCapacity: 510,
+          totalMedicalBeds: 60,
+          availableMedicalBeds: 32,
+          icuTriageBeds: 10,
+          operatingAgencies: 'District Disaster Management Authority (DDMA), NDRF Logistics & SEWA International NGO',
+          waterReserveLiters: 28000,
+          dailyWaterSupplyLiters: 8000,
+          dryRationsDays: 25,
+          bioToiletsCount: 36,
+          powerAndComms: '25 kW Solar Microgrid + High-Speed Emergency Wi-Fi Hub + Starlink Backup',
+          ambulanceCount: 6,
+          helipadDistance: 'Onsite Air Corridor',
+          admissionProtocol: 'Central intake desk in main stadium pavilion. Aadhaar verification & DBT enumeration desk #4 open 08:00 - 20:00.',
+        },
+        active_directives: 'Central intake desk in main pavilion. Medical screening and special needs allocations at Gate 2. Hot community meal service operates continuously at Hall B.',
+        evacuation_plan: {
+          primary_route: 'Chamoli Bypass Expressway Corridor',
+          staging_shelter: 'Chamoli District Sports Complex & Grounds',
+          designated_helipad: 'Chamoli Sports Ground Onsite Helipad',
+        },
+        sign_off: {
+          nodal_officer: 'Dr. V. K. Rawat, Chief Medical Relief Officer (DDMA)',
+          approval_stamp: 'DIGITAL_SEAL_UK_DDMA_CAMP_AUTH',
+        },
+      },
+    });
+  }
+
+  if (entityId === 'gauchar_safe' || entityId === '#hab-gauchar-safe') {
+    return res.json({
+      status: 'success',
+      data: {
+        report_id: 'DOSSIER-HAB-GAUCHAR-SAFE',
+        generated_at_utc: new Date().toISOString(),
+        classification: 'OFFICIAL USE ONLY • GEOLOGICAL SURVEY OF INDIA & UK-SDMA',
+        sector_name: 'Gauchar Alluvial Tableland',
+        zone_code: '#HAB-GAUCHAR-SAFE',
+        risk_level: 'LOW RISK (GREEN ZONE)',
+        factor_of_safety: 10.15,
+        active_directives: 'Normal civic and commercial monitoring. Geotechnical surveys indicate prime bedrock stability suitable for long-term municipal planning.',
+        hydrological_summary: {
+          discharge_rate_m3s: 240,
+          spillway_threshold_m3s: 850,
+          pore_pressure_kpa: 25,
+          rainfall_mmh: 0,
+          saturation_pct: 22,
+        },
+        evacuation_plan: {
+          primary_route: 'Rudraprayag-Gauchar All-Weather Corridor',
+          staging_shelter: 'Gauchar Tableland Municipal Township Site',
+          designated_helipad: 'Gauchar Airstrip & Helipad Complex',
+        },
+        sign_off: {
+          nodal_officer: 'Dr. H. Pant, Chief Geologist (GSI)',
+          approval_stamp: 'DIGITAL_SEAL_GSI_GREEN_ZONE_CLEARED',
+        },
+      },
+    });
+  }
+
   // Find matching location, incident, or zone
   const zone = store.hazard_zones.find(
     (z) => z.id.toLowerCase() === entityId || z.zone_code.toLowerCase().includes(entityId)
