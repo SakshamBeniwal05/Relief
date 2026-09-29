@@ -1037,7 +1037,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         <button
           onClick={() => setIsLegendMinimized(false)}
           type="button"
-          className="absolute bottom-6 right-20 sm:right-24 md:right-24 z-30 pointer-events-auto flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-xl hover:bg-surface-container text-on-surface text-xs font-bold transition-all group animate-fadeIn"
+          className="absolute bottom-6 right-24 sm:right-28 md:right-28 z-30 pointer-events-auto flex items-center gap-2 px-3.5 py-2 rounded-full bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-xl hover:bg-surface-container text-on-surface text-xs font-bold transition-all group animate-fadeIn"
           title="Maximize Legend"
         >
           <span className="material-symbols-outlined text-primary text-base">radar</span>
@@ -1050,7 +1050,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         <>
           {/* Mode 1: Dual Impact Radii HUD Legend (Real vs AI Predicted) */}
           {currentMode === 1 && (
-            <div className="absolute bottom-6 right-20 sm:right-24 md:right-24 z-30 pointer-events-auto p-3.5 rounded-2xl bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-xl max-w-xs text-xs space-y-2.5 font-sans select-none animate-fadeIn">
+            <div className="absolute bottom-6 right-24 sm:right-28 md:right-28 z-30 pointer-events-auto p-3.5 rounded-2xl bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-xl max-w-xs text-xs space-y-2.5 font-sans select-none animate-fadeIn">
               <div className="flex items-center justify-between font-bold border-b border-outline-variant/60 pb-2">
                 <span className="flex items-center gap-1.5 text-on-surface">
                   <span className="material-symbols-outlined text-sm text-primary">radar</span>
@@ -1125,7 +1125,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
           {/* Mode 2: Dynamic Risk Zoning & Relocation Score HUD Legend */}
           {currentMode === 2 && (
-            <div className="absolute bottom-6 right-20 sm:right-24 md:right-24 z-30 pointer-events-auto p-3.5 rounded-2xl bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-xl max-w-xs text-xs space-y-2 font-sans select-none animate-fadeIn">
+            <div className="absolute bottom-6 right-24 sm:right-28 md:right-28 z-30 pointer-events-auto p-3.5 rounded-2xl bg-surface-container-lowest/95 backdrop-blur-xl border border-outline-variant shadow-xl max-w-xs text-xs space-y-2 font-sans select-none animate-fadeIn">
               <div className="flex items-center justify-between font-bold border-b border-outline-variant/60 pb-2">
                 <span className="flex items-center gap-1.5 text-on-surface">
                   <span className="material-symbols-outlined text-sm text-primary">shield</span>

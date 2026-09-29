@@ -26,19 +26,13 @@ export const SosBlock: React.FC<SosBlockProps> = ({ onSosBroadcast }) => {
       {/* Floating SOS Trigger Button */}
       <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 pointer-events-auto">
         <button
-          className="flex items-center gap-1.5 px-5 py-3 rounded-full bg-error text-on-error font-heading font-bold text-xs shadow-2xl hover:bg-error-container hover:text-on-error-container active:scale-95 transition-all ring-4 ring-error/30 animate-bounce"
+          className="flex items-center justify-center px-4 py-2.5 rounded-full bg-error text-on-error font-heading font-black text-xs tracking-wider shadow-2xl hover:bg-error-container hover:text-on-error-container active:scale-95 transition-all ring-4 ring-error/30 cursor-pointer"
           id="sos-trigger-btn"
           onClick={() => setIsSosDrawerOpen(!isSosDrawerOpen)}
           type="button"
           title="Trigger Emergency Crisis SOS"
         >
-          <span
-            className="material-symbols-outlined text-lg"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            sos
-          </span>
-          <span>CRISIS SOS</span>
+          <span>SOS</span>
         </button>
       </div>
 
