@@ -367,6 +367,50 @@ function getAiTheme(score: number) {
   }
 }
 
+// Color Theme & Emblem Helper for Official Government Directives:
+function getGovDirectiveTheme(severity: string = '', orderType: string = '') {
+  const s = (severity || '').toUpperCase();
+  const t = (orderType || '').toUpperCase();
+
+  if (s.includes('CRITICAL') || t.includes('144') || t.includes('EVACUATION')) {
+    return {
+      bandLabel: 'CRITICAL MANDATE',
+      borderClass: 'border-red-600',
+      badgeClass: 'bg-red-600 text-white',
+      accentColor: 'text-red-600 dark:text-red-400',
+      pingColor: 'bg-red-600',
+      icon: 'crisis_alert',
+    };
+  } else if (s.includes('SEVERE') || t.includes('BLOCKADE') || t.includes('ROAD') || t.includes('CUT') || t.includes('LOCKDOWN')) {
+    return {
+      bandLabel: 'HIGH SEVERITY',
+      borderClass: 'border-amber-600',
+      badgeClass: 'bg-amber-600 text-white',
+      accentColor: 'text-amber-600 dark:text-amber-400',
+      pingColor: 'bg-amber-600',
+      icon: 'minor_crash',
+    };
+  } else if (t.includes('GAZETTE') || t.includes('DBT') || t.includes('REHABILITATION') || t.includes('EX-GRATIA')) {
+    return {
+      bandLabel: 'GAZETTE DIRECTIVE',
+      borderClass: 'border-primary',
+      badgeClass: 'bg-primary text-on-primary',
+      accentColor: 'text-primary',
+      pingColor: 'bg-primary',
+      icon: 'policy',
+    };
+  } else {
+    return {
+      bandLabel: 'TACTICAL ADVISORY',
+      borderClass: 'border-blue-600',
+      badgeClass: 'bg-blue-600 text-white',
+      accentColor: 'text-blue-600 dark:text-blue-400',
+      pingColor: 'bg-blue-600',
+      icon: 'campaign',
+    };
+  }
+}
+
 export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
   isOpen,
   onClose,
@@ -616,166 +660,250 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
           </div>
 
           {/* TAB 1: OFFICIAL GOVERNMENT DIRECTIVES */}
-          {mode1Filter === 'official' && (
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-on-surface-variant px-0.5">
-                <span>Official Mandates & Sections</span>
-                <span className="font-mono text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                  SEOC Uttarakhand ({activeDirectives.length} Active)
-                </span>
-              </div>
+          {mode1Filter === 'official' && (() => {
+            const govDirectiveItems = [
+              // 1. Dynamically Published Directives from Admin Dashboard
+              ...activeDirectives
+                .filter((d: any) => d.id !== 'UK-GOV-2024-88' && d.id !== 'UK-GOV-2024-89')
+                .map((d: any) => {
+                  const radiusKm = d.threatRadiusMeters ? d.threatRadiusMeters / 1000 : 3.2;
+                  const coords = d.coordinates || { lat: 30.556, lng: 79.563 };
+                  return {
+                    id: d.id || d.order_code,
+                    orderCode: d.order_code || d.id || '#UK-GOV-LIVE',
+                    title: d.sector || d.targetSector || 'Official Sector Enactment',
+                    authority: d.authority || 'District Magistrate & SDRF Unified Command',
+                    orderType: d.orderType || 'Official Emergency Government Directive',
+                    severity: d.threat_severity || 'CRITICAL',
+                    description: d.directiveText || d.description || 'Mandatory Government Threat Directive Enforced.',
+                    coordinates: coords,
+                    radiusKm,
+                    telemetry: d.liveWeather ? `Temp: ${d.liveWeather.tempC}°C | Rain: ${d.liveWeather.rainMmh}mm/h` : `Core: ${radiusKm.toFixed(1)}km | Buffer: ${(radiusKm + 20).toFixed(1)}km`,
+                    timeAgo: d.timestamp || 'Live Active',
+                    entityKey: d.sectorKey || 'joshimath',
+                    isGazetteModal: false,
+                  };
+                }),
 
-              {/* Dynamically Published Directives from Admin Dashboard */}
-              {activeDirectives.map((d: any) => {
-                if (d.id === 'UK-GOV-2024-88') return null;
-                return (
-                  <div
-                    key={`custom-dir-${d.id || d.order_code}`}
-                    className="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-error shadow-xs transition-all space-y-1"
-                    onClick={() => onSelectEntity(d.sectorKey || 'joshimath')}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-error flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span>
-                        {d.threat_severity || 'CRITICAL'} • {d.orderType || 'SECTION 144'}
-                      </span>
-                      <span className="text-[10px] text-on-surface-variant font-mono">{d.order_code || d.id}</span>
+              // 2. Joshimath Ravigram Sector
+              {
+                id: 'UK-GOV-2024-88',
+                orderCode: '#UK-GOV-2024-88',
+                title: 'Joshimath Ravigram Sector',
+                authority: 'District Magistrate & SDRF Unified Command',
+                orderType: 'Section 144 Emergency Evacuation',
+                severity: 'CRITICAL',
+                description:
+                  'Section 144 enforced. Civilians must immediately evacuate red-flagged structures to Gauchar Staging Hub via designated bypass.',
+                coordinates: { lat: 30.556, lng: 79.563 },
+                radiusKm: 3.2,
+                telemetry: 'FoS: 0.84 Crit | Rain: 84mm/h',
+                timeAgo: '04m ago',
+                entityKey: 'joshimath',
+                isGazetteModal: false,
+              },
+
+              // 3. Chamoli NH-58 Road Slip
+              {
+                id: 'UK-GOV-2024-89',
+                orderCode: '#UK-GOV-2024-89',
+                title: 'Chamoli NH-58 Blockade Slip',
+                authority: 'Chamoli District Police & PWD Highway Wing',
+                orderType: 'Highway Lockdown & Debris Diversion',
+                severity: 'SEVERE',
+                description:
+                  'Talus debris rockfall at KM post 214. Highway completely severed. Heavy vehicles diverted via Pipalkoti-Helang bypass.',
+                coordinates: { lat: 30.512, lng: 79.521 },
+                radiusKm: 2.4,
+                telemetry: 'NH-58 Blocked • PWD Onsite | Rain: 68mm/h',
+                timeAgo: '28m ago',
+                entityKey: 'chamoli',
+                isGazetteModal: false,
+              },
+
+              // 4. Alaknanda Surge: Pipalkoti Hub
+              {
+                id: 'UK-GOV-2024-90',
+                orderCode: '#UK-GOV-2024-90',
+                title: 'Alaknanda Surge: Pipalkoti Hub',
+                authority: 'Central Water Commission & SDRF Flood Unit',
+                orderType: 'Riverbed Cordon & Flood Evacuation',
+                severity: 'ADVISORY',
+                description:
+                  'Discharge has surged to 1,024 m³/s past safe spillway limit. High-altitude glacial lake runoffs affecting low-lying riverbanks.',
+                coordinates: { lat: 30.429, lng: 79.33 },
+                radiusKm: 4.8,
+                telemetry: 'Discharge: 1,024 m³/s | Rain: 112mm/h',
+                timeAgo: '12m ago',
+                entityKey: 'alaknanda',
+                isGazetteModal: false,
+              },
+
+              // 5. Phase 1 DBT Ex-gratia Disbursement (Gazette Notification)
+              {
+                id: 'UK-GOV-2024-GAZ-412',
+                orderCode: '#UK-GOV-2024-GAZ-412',
+                title: 'Phase 1 DBT Ex-gratia Disbursement',
+                authority: 'Uttarakhand SDMA & Revenue Department',
+                orderType: 'Statutory Gazette Relocation Order',
+                severity: 'GAZETTE',
+                description:
+                  '₹1.5 Lakh/family direct bank compensation released. Physical documents verification roster active at Tehsil Desk #3.',
+                coordinates: { lat: 30.556, lng: 79.563 },
+                radiusKm: 3.5,
+                telemetry: 'Oct 12 Deadline • 384/412 Disbursed (₹6.18 Cr)',
+                timeAgo: 'Active Roster',
+                entityKey: 'gazette',
+                isGazetteModal: true,
+              },
+            ];
+
+            return (
+              <div className="space-y-3">
+                {/* Statutory Directives Legend Banner (Mirroring AI Predictions Banner) */}
+                <div className="p-3 rounded-2xl bg-surface-container border border-red-200 dark:border-red-900/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-red-700 dark:text-red-400">
+                      <span className="material-symbols-outlined text-sm">gavel</span>
+                      <span>Statutory Directives & Disaster Act Orders</span>
                     </div>
-                    <h3 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
-                      {d.sector || d.targetSector}
-                    </h3>
-                    <p className="text-xs text-on-surface-variant leading-relaxed line-clamp-2">
-                      {d.directiveText || d.description}
-                    </p>
-                    <div className="flex items-center justify-between text-[9px] font-mono pt-1">
-                      {(() => {
-                        const coords = d.coordinates || { lat: 30.556, lng: 79.563 };
-                        const distKm = calculateHaversineDistanceKm(effectiveGps.lat, effectiveGps.lng, coords.lat, coords.lng);
-                        const bufferKm = (d.threatRadiusMeters ? d.threatRadiusMeters / 1000 : 3.2) + 20.0;
-                        const isWithin = distKm <= bufferKm;
-                        return isWithin ? (
-                          <span className="px-1.5 py-0.5 rounded bg-error/15 text-error font-bold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-error animate-ping" />
-                            WITHIN 20KM BUFFER ({distKm.toFixed(1)}km away)
-                          </span>
-                        ) : (
-                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold">
-                            OUTSIDE 20KM BUFFER ({distKm.toFixed(1)}km away)
-                          </span>
-                        );
-                      })()}
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-200">
+                      DMA 2005
+                    </span>
+                  </div>
+
+                  {/* Statutory Classification Bands */}
+                  <div className="grid grid-cols-3 gap-1 text-[10px] font-bold text-center">
+                    <div className="p-1 rounded-lg bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200 border border-red-300 dark:border-red-700">
+                      <span className="block text-[9px] opacity-75">Section 144</span>
+                      <span className="text-red-700 dark:text-red-300 font-extrabold">Critical Evac</span>
                     </div>
-                    <div className="mt-1 flex items-center justify-between pt-1 border-t border-outline-variant/60 text-[10px] font-bold text-primary">
-                      <span className="font-mono text-zinc-500">Radius: {d.threatRadiusMeters ? `${(d.threatRadiusMeters / 1000).toFixed(1)}km` : '3.2km'}</span>
-                      <span className="flex items-center gap-0.5 group-hover:underline">
-                        Dossier <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                      </span>
+                    <div className="p-1 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                      <span className="block text-[9px] opacity-75">Highway Cut</span>
+                      <span className="text-amber-700 dark:text-amber-300 font-extrabold">Severe Slip</span>
+                    </div>
+                    <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700">
+                      <span className="block text-[9px] opacity-75">Gazette DBT</span>
+                      <span className="text-emerald-700 dark:text-emerald-300 font-extrabold">Ex-Gratia</span>
                     </div>
                   </div>
-                );
-              })}
-
-              {/* Joshimath Section 144 Directive */}
-              <div
-                className="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-error shadow-xs transition-all"
-                onClick={() => onSelectEntity('joshimath')}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-bold text-error flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-error animate-ping"></span> CRITICAL • SECTION 144
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant font-mono">04m ago</span>
                 </div>
-                <h3 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
-                  Joshimath Ravigram Sector
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1 leading-relaxed line-clamp-2">
-                  Section 144 enforced. Civilians must immediately evacuate red-flagged structures to Gauchar Staging Hub via designated bypass.
-                </p>
-                <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-primary">
-                  <span className="font-mono">FoS: 0.84 Crit | Rain: 84mm/h</span>
-                  <span className="flex items-center gap-0.5 group-hover:underline">
-                    Dossier <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                  </span>
+
+                {/* Unified Government Directive Cards (Identical Layout to AI Prediction Cards) */}
+                <div className="space-y-2.5">
+                  {govDirectiveItems.map((item) => {
+                    const theme = getGovDirectiveTheme(item.severity, item.orderType);
+                    const distKm = calculateHaversineDistanceKm(
+                      effectiveGps.lat,
+                      effectiveGps.lng,
+                      item.coordinates.lat,
+                      item.coordinates.lng
+                    );
+                    const bufferKm = item.radiusKm + 20.0;
+                    const isWithinBuffer = distKm <= bufferKm;
+                    const isInsideDirectImpact = distKm <= item.radiusKm;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 ${theme.borderClass} shadow-xs transition-all space-y-2`}
+                        onClick={() => {
+                          if (item.isGazetteModal && onOpenRehabilitationModal) {
+                            onOpenRehabilitationModal();
+                          } else {
+                            onSelectEntity(item.entityKey);
+                          }
+                        }}
+                      >
+                        {/* 1. Top Header with Severity Badge & Time/Code */}
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${theme.badgeClass}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full bg-white ${theme.bandLabel.includes('CRITICAL') ? 'animate-ping' : ''}`} />
+                            {theme.bandLabel} • {item.orderType.toUpperCase()}
+                          </span>
+                          <span className="text-[11px] font-mono text-on-surface-variant font-medium">
+                            {item.timeAgo}
+                          </span>
+                        </div>
+
+                        {/* 2. Title & Authority Subtitle with Right-Hand Emblem Icon */}
+                        <div className="flex items-start justify-between gap-1">
+                          <div>
+                            <h4 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
+                              {item.title}
+                            </h4>
+                            <p className="text-[11px] text-on-surface-variant font-medium mt-0.5">
+                              Authority: {item.authority}
+                            </p>
+                          </div>
+                          <span className={`material-symbols-outlined text-lg ${theme.accentColor} shrink-0`}>
+                            {theme.icon}
+                          </span>
+                        </div>
+
+                        {/* 3. Directive Description Body */}
+                        <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed line-clamp-2">
+                          {item.description}
+                        </p>
+
+                        {/* 4. Two-Tier Impact Radii Comparison Panel (identical to AI prediction card) */}
+                        <div className="mt-2.5 p-2 rounded-xl bg-surface-container/70 border border-outline-variant/60 text-[10px] space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1 font-bold text-on-surface">
+                              <span className={`w-2 h-2 rounded-full border border-red-600 bg-red-500/40`} />
+                              1. Enforced Ground Red Zone:
+                            </span>
+                            <span className={`font-mono font-bold ${theme.accentColor}`}>
+                              {item.radiusKm.toFixed(1)} km (Mandatory Cordon)
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="flex items-center gap-1 font-semibold text-outline">
+                              <span className="w-2 h-2 rounded-full border border-dashed border-zinc-400" />
+                              2. Citizen Tracking Buffer:
+                            </span>
+                            <span className="font-mono font-bold text-on-surface">
+                              {bufferKm.toFixed(1)} km (+20km Perimeter)
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-0.5 border-t border-outline-variant/30 text-[9px]">
+                            <span className="text-outline font-mono">User GPS Proximity:</span>
+                            {isInsideDirectImpact ? (
+                              <span className="font-bold text-error flex items-center gap-1 font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-error animate-ping" />
+                                INSIDE IMPACT ZONE ({distKm.toFixed(1)} km)
+                              </span>
+                            ) : isWithinBuffer ? (
+                              <span className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                WITHIN 20KM BUFFER ({distKm.toFixed(1)} km)
+                              </span>
+                            ) : (
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                SAFE PERIMETER ({distKm.toFixed(1)} km away)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 5. Telemetry & Action Footer */}
+                        <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold">
+                          <span className={`font-mono ${theme.accentColor}`}>
+                            {item.telemetry}
+                          </span>
+                          <span className="text-primary group-hover:underline flex items-center gap-0.5 font-sans shrink-0">
+                            {item.isGazetteModal ? 'View Gazette Roster' : 'View Directive Dossier'}{' '}
+                            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Chamoli NH-58 Road Cut Directive */}
-              <div
-                className="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-amber-600 shadow-xs transition-all"
-                onClick={() => onSelectEntity('chamoli')}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> HIGH SLIP RISK • ROAD SEVERED
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant font-mono">28m ago</span>
-                </div>
-                <h3 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
-                  Chamoli NH-58 Blockade Slip
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1 leading-relaxed line-clamp-2">
-                  Talus debris rockfall at KM post 214. Highway completely severed. Reroute via Helang bypass.
-                </p>
-                <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                  <span className="font-mono">NH-58 Blocked • PWD Onsite</span>
-                  <span className="flex items-center gap-0.5 text-primary group-hover:underline">
-                    Dossier <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Alaknanda Floodplain Clearance Directive */}
-              <div
-                className="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-blue-600 shadow-xs transition-all"
-                onClick={() => onSelectEntity('alaknanda')}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> FLASH FLOOD VECTOR
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant font-mono">12m ago</span>
-                </div>
-                <h3 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
-                  Alaknanda Surge: Pipalkoti Hub
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1 leading-relaxed line-clamp-2">
-                  Discharge has surged to 1,024 m³/s past safe spillway limit. High-altitude glacial lake runoffs affecting low-lying riverbanks.
-                </p>
-                <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-primary">
-                  <span className="font-mono">Discharge: 1,024 m³/s</span>
-                  <span className="flex items-center gap-0.5 group-hover:underline">
-                    Dossier <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Gazette Notification Card */}
-              <div
-                className="group cursor-pointer p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border-l-4 border-primary shadow-xs transition-all"
-                onClick={() => (onOpenRehabilitationModal ? onOpenRehabilitationModal() : onSelectEntity('gazette'))}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-bold text-primary flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> GAZETTE NOTIFICATION
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant font-mono">UK-GOV-2024-88</span>
-                </div>
-                <h3 className="font-heading font-bold text-sm text-on-surface group-hover:text-primary transition-colors">
-                  Phase 1 DBT Ex-gratia Disbursement
-                </h3>
-                <p className="text-xs text-on-surface-variant mt-1 leading-relaxed line-clamp-2">
-                  ₹1.5 Lakh/family direct bank compensation released. Physical documents verification roster active at Tehsil Desk #3.
-                </p>
-                <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-outline-variant/60 text-[11px] font-bold text-primary">
-                  <span className="font-mono">Oct 12 Submission Deadline</span>
-                  <span className="flex items-center gap-0.5 group-hover:underline">
-                    View Roster <span className="material-symbols-outlined text-xs">arrow_forward</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB 2: AI PREDICTIONS ONLY (NO LIVE DISASTER STREAM, PURPLE / BLUE / LIGHT-BLUE THEME) */}
           {mode1Filter === 'ai' && (
