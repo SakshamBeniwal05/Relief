@@ -36,9 +36,36 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
 let pingInterval: any = null;
 
 function getWebSocketUrl(): string {
-  if (typeof window === 'undefined') return 'ws://localhost:3000/ws';
-  const hostname = window.location.hostname || 'localhost';
-  return `ws://${hostname}:3000/ws`;
+  // 1. Explicit WebSocket URL from environment variable
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+
+  // 2. Automatically derive WebSocket endpoint from VITE_API_URL if provided (e.g. Render backend)
+  if (import.meta.env.VITE_API_URL) {
+    try {
+      const parsed = new URL(import.meta.env.VITE_API_URL);
+      const isSecure = parsed.protocol === 'https:';
+      const wsProtocol = isSecure ? 'wss:' : 'ws:';
+      return `${wsProtocol}//${parsed.host}/ws`;
+    } catch (err) {
+      console.warn('[WebSocket] Could not parse VITE_API_URL for WebSocket auto-detection:', err);
+    }
+  }
+
+  // 3. Browser environment fallback
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname || 'localhost';
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'ws://localhost:3000/ws';
+    }
+    // Production web deployment (e.g. Vercel / Render / Netlify HTTPS)
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const portPart = window.location.port ? `:${window.location.port}` : '';
+    return `${wsProtocol}//${hostname}${portPart}/ws`;
+  }
+
+  return 'ws://localhost:3000/ws';
 }
 
 /**

@@ -33,7 +33,12 @@ const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname || 'localhost';
-    return `http://${hostname}:3000/api`;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3000/api';
+    }
+    // Web deployment fallback: use current protocol and domain
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}/api`;
   }
   return 'http://localhost:3000/api';
 };

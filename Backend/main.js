@@ -21,8 +21,44 @@ import riskZoningRoutes from './src/routes/riskZoningRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors({ origin: '*' }));
+// Production-Ready CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : null;
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // 1. Allow server-to-server, curl, mobile apps, or same-origin requests with no origin header
+    if (!origin) return callback(null, true);
+    // 2. If explicit ALLOWED_ORIGINS whitelist is configured in env, strictly enforce it
+    if (allowedOrigins && allowedOrigins.length > 0) {
+      if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      console.warn(`[CORS] Rejected request from unlisted origin: ${origin}`);
+      return callback(new Error(`Origin ${origin} not permitted by CORS policy`));
+    }
+    // 3. Default: Dynamically reflect requesting origin so credentials & web deployments (Vercel, Render, Netlify) work seamlessly
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Cache-Control',
+    'X-CSRF-Token',
+  ],
+  exposedHeaders: ['Content-Length', 'X-Total-Count', 'ETag'],
+  maxAge: 86400, // 24-hour preflight cache to minimize browser roundtrips
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
