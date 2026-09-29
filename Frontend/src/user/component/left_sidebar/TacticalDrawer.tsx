@@ -585,7 +585,7 @@ export const TacticalDrawer: React.FC<TacticalDrawerProps> = ({
 
   return (
     <aside
-      className={`fixed left-4 top-20 bottom-4 z-30 w-80 md:w-96 max-w-[calc(100vw-2rem)] bg-surface-container-lowest/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden transition-all duration-300 ${
+      className={`fixed left-4 top-20 bottom-4 z-30 w-[22rem] md:w-[27rem] max-w-[calc(100vw-2rem)] bg-surface-container-lowest/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden transition-all duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-[115%]'
       }`}
       id="tactical-drawer"

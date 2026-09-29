@@ -27,12 +27,12 @@ export const DetailSidebar: React.FC<DetailSidebarProps> = ({
   // When drawer is open: dock adjacent on md+ screens (left-4 on mobile)
   // When drawer is closed: dock in sidebar location (left-4)
   const positionClasses = isDrawerOpen
-    ? 'left-4 md:left-[25.75rem] md:max-w-[calc(100vw-27.5rem)]'
+    ? 'left-4 md:left-[28.75rem] md:max-w-[calc(100vw-30.5rem)]'
     : 'left-4 max-w-[calc(100vw-2rem)]';
 
   return (
     <aside
-      className={`fixed top-20 bottom-4 z-40 w-80 md:w-[26rem] bg-white text-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${positionClasses}`}
+      className={`fixed top-20 bottom-4 z-40 w-[22rem] md:w-[28rem] bg-white text-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${positionClasses}`}
       id="details-sidebar"
     >
       {/* Sidebar Header */}
