@@ -7,4 +7,7 @@ export * from './component/right';
 export * from './component/sos_block';
 export * from './component/map/MapCanvas';
 export * from './component/map/MapSettingsModal';
+export * from './component/alert/BroadcastAlertModal';
+export * from './component/directions';
+export * from './component/rehabilitation';
 export * from './utilities/volunteer_application';

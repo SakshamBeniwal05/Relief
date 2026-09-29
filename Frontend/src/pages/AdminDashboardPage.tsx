@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AdminNavbar,
   AdminSideNav,
@@ -13,6 +13,23 @@ import {
   INITIAL_INCIDENTS,
   ADMIN_ACTIVITY_LOGS,
 } from '../admin';
+import type {
+  HeroStatMetric,
+  VolunteerApplicant,
+  GeoIncident,
+  ActivityLogItem,
+} from '../admin';
+import {
+  fetchAdminStats,
+  fetchVolunteerApplicants,
+  updateVolunteerStatus,
+  fetchGeoIncidents,
+  updateIncidentStatus,
+  issueGazetteDirective,
+  broadcastEmergencyThreatAlert,
+  fetchActivityLogs,
+} from '../services/api';
+import { initWebSocketConnection } from '../services/websocket';
 
 interface AdminDashboardPageProps {
   onSwitchToUserMap?: () => void;
@@ -23,6 +40,27 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 }) => {
   const [activeNavTab, setActiveNavTab] = useState<string>('resettlement-queues');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [stats, setStats] = useState<HeroStatMetric[]>(ADMIN_HERO_STATS);
+  const [applicants, setApplicants] = useState<VolunteerApplicant[]>(INITIAL_APPLICANTS);
+  const [incidents, setIncidents] = useState<GeoIncident[]>(INITIAL_INCIDENTS);
+  const [logs, setLogs] = useState<ActivityLogItem[]>(ADMIN_ACTIVITY_LOGS);
+
+  useEffect(() => {
+    initWebSocketConnection();
+    fetchAdminStats().then((data) => {
+      if (data && data.length > 0) setStats(data);
+    });
+    fetchVolunteerApplicants().then((data) => {
+      if (data && data.length > 0) setApplicants(data);
+    });
+    fetchGeoIncidents().then((data) => {
+      if (data && data.length > 0) setIncidents(data);
+    });
+    fetchActivityLogs().then((data) => {
+      if (data && data.length > 0) setLogs(data);
+    });
+  }, []);
 
   return (
     <div className="bg-background text-on-surface antialiased min-h-screen flex flex-col font-sans selection:bg-secondary-container selection:text-primary">
@@ -54,21 +92,32 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <CommanderHeaderStrip onSwitchToMapHud={onSwitchToUserMap} />
 
           {/* SECTION 2: HERO STAT CARDS (4-Column Bento Metric Ribbon) */}
-          <AdminHeroStats stats={ADMIN_HERO_STATS} />
+          <AdminHeroStats stats={stats} />
 
           {/* SECTION 3: VOLUNTEER MANAGEMENT & INTAKE QUEUE */}
-          <AdminVolunteerConsole initialApplicants={INITIAL_APPLICANTS} />
+          <AdminVolunteerConsole
+            initialApplicants={applicants}
+            onApprove={(id) => updateVolunteerStatus(id, 'approved')}
+            onReject={(id) => updateVolunteerStatus(id, 'rejected')}
+          />
 
           {/* SECTION 4: ANTI-PRANK GEO-CAM INCIDENT VERIFICATION QUEUE */}
-          <AdminGeocamQueue initialIncidents={INITIAL_INCIDENTS} />
+          <AdminGeocamQueue
+            initialIncidents={incidents}
+            onVerifyAndPushMap={(id) => updateIncidentStatus(id, 'verified')}
+            onEscalateSdrf={(id) => updateIncidentStatus(id, 'escalated')}
+          />
 
           {/* SECTION 5: ADMINISTRATIVE GAZETTE & RELOCATION MANAGEMENT CONTROLS */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-7">
-              <AdminSosDirectives />
+              <AdminSosDirectives
+                onBroadcastDirective={(payload) => issueGazetteDirective(payload)}
+                onBroadcastAlert={(payload) => broadcastEmergencyThreatAlert(payload)}
+              />
             </div>
             <div className="lg:col-span-5">
-              <AdminActivityLog logs={ADMIN_ACTIVITY_LOGS} />
+              <AdminActivityLog logs={logs} />
             </div>
           </section>
 

@@ -5,6 +5,7 @@ interface MapControlsProps {
   onZoomOut?: () => void;
   onRecenterGPS?: () => void;
   onOpenMapSettings?: () => void;
+  onOpenDirections?: () => void;
 }
 
 export const MapControls: React.FC<MapControlsProps> = ({
@@ -12,9 +13,23 @@ export const MapControls: React.FC<MapControlsProps> = ({
   onZoomOut,
   onRecenterGPS,
   onOpenMapSettings,
+  onOpenDirections,
 }) => {
   return (
     <div className="flex flex-col bg-surface-container-lowest/90 backdrop-blur-md rounded-full border border-outline-variant shadow-lg p-1 gap-1 text-on-surface">
+      {onOpenDirections && (
+        <>
+          <button
+            className="p-2 rounded-full hover:bg-blue-50 text-blue-600 active:scale-90 transition-all"
+            onClick={onOpenDirections}
+            title="Google Maps Route Directions"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">directions</span>
+          </button>
+          <div className="w-full h-px bg-outline-variant"></div>
+        </>
+      )}
       {onOpenMapSettings && (
         <>
           <button

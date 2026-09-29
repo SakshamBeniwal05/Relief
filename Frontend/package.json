@@ -12,6 +12,8 @@
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
     "@tailwindcss/vite": "^4.3.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3"

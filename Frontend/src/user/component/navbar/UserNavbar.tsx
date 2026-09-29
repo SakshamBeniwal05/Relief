@@ -6,9 +6,11 @@ interface UserNavbarProps {
   onSelectMode: (mode: ModeType) => void;
   onToggleDrawer: () => void;
   onToggleRadar: () => void;
+  onToggleDirections?: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   onOpenProfile?: () => void;
+  onOpenRehabilitationModal?: () => void;
 }
 
 export const UserNavbar: React.FC<UserNavbarProps> = ({
@@ -16,9 +18,11 @@ export const UserNavbar: React.FC<UserNavbarProps> = ({
   onSelectMode,
   onToggleDrawer,
   onToggleRadar,
+  onToggleDirections,
   searchQuery,
   onSearchChange,
   onOpenProfile,
+  onOpenRehabilitationModal,
 }) => {
   return (
     <header className="fixed top-4 inset-x-4 z-50 pointer-events-none flex items-center justify-between gap-4">
@@ -122,6 +126,29 @@ export const UserNavbar: React.FC<UserNavbarProps> = ({
         >
           <span className="material-symbols-outlined text-lg">satellite_alt</span>
         </button>
+
+        {onToggleDirections && (
+          <button
+            className="w-9 h-9 rounded-full bg-blue-600 text-white shadow-sm flex items-center justify-center hover:bg-blue-700 transition-colors active:scale-95"
+            onClick={onToggleDirections}
+            title="Google Maps Route Directions"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">directions</span>
+          </button>
+        )}
+
+        {onOpenRehabilitationModal && (
+          <button
+            className="relative w-9 h-9 rounded-full bg-surface-container-lowest/90 backdrop-blur-md border border-outline-variant shadow-sm flex items-center justify-center text-amber-500 hover:text-amber-600 transition-colors active:scale-95"
+            onClick={onOpenRehabilitationModal}
+            title="Government Rehabilitation & Document Submission Deadlines"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">event_note</span>
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-error ring-2 ring-white animate-pulse" />
+          </button>
+        )}
 
         <button
           className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-xs shadow-sm active:scale-95 transition-transform"

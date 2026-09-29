@@ -30,6 +30,51 @@ export interface GazetteOrderPayload {
   targetSector: string;
   directiveText: string;
   pushBleMeshSiren: boolean;
+  coordinates?: { lat: number; lng: number };
+  threatCategory?: string;
+  threatSeverity?: 'CRITICAL' | 'SEVERE' | 'ADVISORY';
+  threatRadiusMeters?: number;
+  compensationPerFamilyInr?: number;
+  targetFamilies?: number;
+  deadlineDate?: string;
+  authority?: string;
+}
+
+export interface GeneratedAiDossier {
+  report_id: string;
+  order_code: string;
+  sector_name: string;
+  coordinates: { lat: number; lng: number };
+  threat_radius_meters: number;
+  threat_category: string;
+  threat_severity: string;
+  detected_threat_signature?: string;
+  live_weather: {
+    temp_c: number;
+    rain_mmh: number;
+    humidity_pct: number;
+    soil_saturation_pct: number;
+    source: string;
+  };
+  geotechnical_analysis: {
+    factor_of_safety: number;
+    hazard_score: number;
+    alert_level: string;
+    sec144_enforceable: boolean;
+    recommendation: string;
+  };
+  directives: string;
+  sign_off: {
+    nodal_officer: string;
+    approval_stamp: string;
+    timestamp?: string;
+  };
+  compensation?: {
+    per_family_inr: number;
+    target_families: number;
+    total_budget_cr: number;
+    deadline_date: string;
+  };
 }
 
 export interface ActivityLogItem {

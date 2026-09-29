@@ -113,6 +113,64 @@ export const SosBlock: React.FC<SosBlockProps> = ({ onSosBroadcast }) => {
                 {broadcastSent ? 'Distress Beacon Transmitted!' : 'Broadcast BLE Mesh SOS (Offline)'}
               </span>
             </button>
+
+            {/* Tactical Broadcast Alert Test Triggers */}
+            <div className="pt-2 border-t border-outline-variant/40 space-y-1.5">
+              <span className="text-[10px] font-mono text-outline block text-center">
+                SIMULATE LOCATION-BASED BROADCAST:
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  className="py-1.5 px-2 rounded-xl bg-error/15 border border-error/30 text-error font-heading font-bold text-[10px] hover:bg-error/25 transition-colors"
+                  onClick={() => {
+                    if (onSosBroadcast) onSosBroadcast();
+                    window.dispatchEvent(
+                      new CustomEvent('sih-emergency-alert', {
+                        detail: {
+                          id: `alert-${Date.now()}`,
+                          orderType: 'SECTION 144 EVACUATION ORDER',
+                          directiveText:
+                            'By order of District Magistrate / NDRF Command: Immediate cessation of civilian transit. All residents directed to designated Transit Hubs.',
+                          targetSector: 'Sector 4B (Joshimath Lower Town)',
+                          sectorCoords: { lat: 30.556, lng: 79.563 },
+                          threatRadiusMeters: 1200,
+                          authorizedBy: 'Col. R. Sharma (Retd.) • District Magistrate & SDRF Unified Command',
+                          timestamp: `${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} IST`,
+                        },
+                      })
+                    );
+                    setIsSosDrawerOpen(false);
+                  }}
+                  type="button"
+                >
+                  Inside Radius (Center)
+                </button>
+                <button
+                  className="py-1.5 px-2 rounded-xl bg-secondary-container border border-outline-variant text-primary font-heading font-bold text-[10px] hover:bg-secondary-container/80 transition-colors"
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent('sih-emergency-alert', {
+                        detail: {
+                          id: `alert-${Date.now()}`,
+                          orderType: 'CORRIDOR CLOSURE ADVISORY',
+                          directiveText:
+                            'Heavy commercial transport halted at Rudraprayag barrier. Civilian convoys rerouted via Helang bypass.',
+                          targetSector: 'Gauchar Sector 1C / Pipalkoti Corridor',
+                          sectorCoords: { lat: 30.291, lng: 79.155 },
+                          threatRadiusMeters: 800,
+                          authorizedBy: 'State Emergency Operations Centre (SEOC) Helpline 1070',
+                          timestamp: `${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} IST`,
+                        },
+                      })
+                    );
+                    setIsSosDrawerOpen(false);
+                  }}
+                  type="button"
+                >
+                  Outside Radius (Top-Right)
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
